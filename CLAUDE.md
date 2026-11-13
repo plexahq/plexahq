@@ -1,6 +1,6 @@
 # Plexa: project notes
 
-Plexa is an MCP gateway that connects AI clients (Claude, Claude Code, ChatGPT, Cursor, VS Code) to LayerZero's **Zero** chain, EVM chains and LayerZero cross-chain messaging. Twelve tools, all read-only. Live at https://plexahq.vercel.app (MCP endpoint `/mcp`). Repo `plexahq/plexahq`, default branch `main`. It is public only because Vercel Hobby can't deploy private org repos; the owner wants the code private, so make it private once on Vercel Pro. The website must never link to GitHub or the source code.
+Plexa is an MCP gateway that connects AI clients (Claude, Claude Code, ChatGPT, Cursor, VS Code) to LayerZero's **Zero** chain, EVM chains and LayerZero cross-chain messaging. Sixteen tools, all read-only. Live at https://plexahq.vercel.app (MCP endpoint `/mcp`). Repo `plexahq/plexahq`, default branch `main`. It is public only because Vercel Hobby can't deploy private org repos; the owner wants the code private, so make it private once on Vercel Pro. The website must never link to GitHub or the source code.
 
 The owner writes in Turkish; reply in Turkish. Website copy is English.
 
@@ -11,8 +11,10 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
 
 ## Layout
 - `src/`: the server.
-  - `chains.ts`: chain registry and env overrides.
-  - `tools/evm.ts`, `tools/layerzero.ts`: the tools.
+  - `chains.ts`: chain registry and env overrides. Mainnets: Ethereum, Arbitrum, Base, HyperEVM, BNB (`bnb`), OP, Polygon, Avalanche, plus Zero placeholders.
+  - `tools/evm.ts`, `tools/layerzero.ts`, `tools/markets.ts`: the tools.
+  - `lzsecurity.ts`: `lz_app_security` (peers, DVNs per pathway via EndpointV2 `getConfig`, owner/delegate, Safe detection, risk level).
+  - `stocks.ts`: Ondo Global Markets token list (Ethereum + BNB), used by `stocks_lookup` / `stocks_portfolio`. `tools/markets.ts` also has `zro_overview` (ZRO OFT at the same address on 7 chains).
   - `layerzero.ts`: Scan API and metadata clients.
   - `sourcify.ts`, `abi.ts`.
   - `live.ts`: snapshot behind `/api/live`.
@@ -21,15 +23,15 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
 - `api/*.js`: Vercel functions that import `../dist/web.js`.
   - `api/contact.js`: contact form. Saves each message as private JSON in Vercel Blob store `plexa-contact` (`contact/YYYY-MM-DD/...`), via `BLOB_READ_WRITE_TOKEN`. Read them in Vercel → Storage.
 - `site/`: Vite multi-page site, built into `site-dist/`.
-  - Pages: `index.html` (home, 12 chapters `data-chapter` 0–11), plus `product`, `docs`, `stats`, `company`, `contact`.
+  - Pages: `index.html` (home, 14 chapters `data-chapter` 0–13: …5 cross-chain, 6 trust check, 7 zero + ZRO panel, 8 markets, 9 security…), plus `product`, `docs`, `stats`, `company`, `contact`. Chapter index = formation index = `VIEWS` index; inserting a chapter means inserting in all three and updating `SCENES` in `page.ts`.
   - `partials/nav.html` and `partials/footer.html` are inlined with `<!--#include name-->` by a plugin in `vite.config.ts`.
   - Clean URLs: `cleanUrls` in `vercel.json`, plus a dev/preview middleware.
   - `src/main.ts`: home bootstrap. `src/page.ts`: sub-pages, with a `SCENES` map giving each page a hero and an ambient formation.
-  - `src/motion.ts`: Lenis, GSAP ScrollTrigger, word splitting, reveals, kicker scramble, chapter HUD and rail. It emits scroll-scrubbed transitions as `(a, c, t)`.
+  - `src/motion.ts`: Lenis, GSAP ScrollTrigger, word splitting, reveals, kicker scramble, chapter HUD and rail. It emits scroll-scrubbed transitions as `(a, c, t)`. A ResizeObserver refreshes ScrollTrigger when live demos change the page height.
   - `src/nav.ts`: mobile menu.
   - `src/demos.ts`: connect tabs, read demo, simulate console, LayerZero track timeline, countdown, tools grid.
   - `src/live.ts`: `LiveFeed` that polls `/api/live`. `src/mcp.ts`: `callTool` client. `src/pages/*`: docs, stats and contact logic.
-  - `src/scene/formations.ts`: 12 particle formations, indexed by chapter, plus `CHAIN_NODES`.
+  - `src/scene/formations.ts`: 14 particle formations (incl. `quorum` shield and `candles` chart), indexed by chapter, plus `CHAIN_NODES`.
   - `src/scene/plexus.ts`: Three.js points shader.
     - Each particle has 3 targets: formation A, a full-screen "storm" and formation C. `uT` runs 0..1, with the storm at 0.5.
     - `VIEWS` places each formation: scale > 1.3 means a full-screen backdrop, otherwise it sits in the free right column.
@@ -58,7 +60,8 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
 ## Open items
 - Contact: no email or X handle yet; the form stores messages in Blob (no email notification yet).
 - No Open Graph image. Custom domain comes later (Vercel → Settings → Domains).
-- Product roadmap: signing page, OFT bridging quotes, OApp DVN/security review, lzATLAS market data, agent wallets with limits.
+- Product roadmap: ATLAS market data (read-only, once LayerZero publishes an interface), signing page, OFT bridging quotes.
+- Out of scope by owner decision: anything with legal or licensing risk, e.g. trading or order preparation for tokenized stocks, agent trading mandates, licensed exchange price data. Stock tools show token supply and holdings only, never prices.
 - Merged branches that can be deleted: `claude/mcp-core`, `site/v1`, `site/v2`.
 
 ## Conventions

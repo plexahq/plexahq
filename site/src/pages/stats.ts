@@ -1,7 +1,8 @@
 import { appName, chainName, statusClass, type LiveFeed, type LiveSnapshot } from "../live";
-import { ago, esc, short } from "../mcp";
+import { ago, callTool, esc, short } from "../mcp";
 
 const CHAINS: Record<string, string> = { ethereum: "Ethereum", base: "Base", arbitrum: "Arbitrum", hyperevm: "HyperEVM" };
+const STOCKS = ["NVDA", "AAPL", "TSLA", "SPY", "QQQ", "MSFT"];
 const $ = (id: string) => document.getElementById(id)!;
 
 function topCounts(values: string[], n: number): [string, number][] {
@@ -84,3 +85,42 @@ export function initStats(feed: LiveFeed) {
   };
   feed.on((s) => render(s));
 }
+
+const n = (s: string) => Number(s.replace(/,/g, ""));
+const compact = (v: number) => (v >= 1e9 ? `${(v / 1e9).toFixed(2)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(1)}K` : v.toFixed(0));
+
+/** ZRO supply per chain and a handful of tokenized stocks, read through Plexa's own tools. */
+export async function initMarketStats() {
+  const zroEl = $("zro-stats");
+  const stockEl = $("stock-stats");
+  if (!zroEl || !stockEl) return;
+  callTool<{ supply: { countedOnTheseChains: string; byChain: { chain: string; supply: string; share: string }[] } }>("zro_overview", {})
+    .then(({ data }) => {
+      const rows = data.supply.byChain;
+      const max = Math.max(...rows.map((r) => n(r.supply)));
+      const w = (v: number) => Math.max(0.03, Math.log10(1 + v) / Math.log10(1 + max));
+      $("zro-total-s").textContent = `${compact(n(data.supply.countedOnTheseChains))} ZRO`;
+      zroEl.innerHTML = rows
+        .map((r) => `<div class="bar"><span class="bar-k">${esc(r.chain)}</span><span class="bar-t"><i style="transform:scaleX(${w(n(r.supply))})"></i></span><span class="bar-v">${compact(n(r.supply))} <small>${esc(r.share)}</small></span></div>`)
+        .join("");
+    })
+    .catch((e) => (zroEl.innerHTML = `<p class="err">${esc((e as Error).message)}</p>`));
+  const results = await Promise.all(
+    STOCKS.map((q) =>
+      callTool<{ matches?: { symbol: string; name: string; totalTokens: string }[] }>("stocks_lookup", { query: q })
+        .then(({ data }) => data.matches?.[0])
+        .catch(() => undefined),
+    ),
+  );
+  const rows = results.filter((r): r is { symbol: string; name: string; totalTokens: string } => Boolean(r));
+  if (!rows.length) {
+    stockEl.innerHTML = `<p class="err">Stock data is unavailable right now.</p>`;
+    return;
+  }
+  rows.sort((a, b) => n(b.totalTokens) - n(a.totalTokens));
+  const max = Math.max(...rows.map((r) => n(r.totalTokens)));
+  stockEl.innerHTML = rows
+    .map((r) => `<div class="bar"><span class="bar-k">${esc(r.name)}</span><span class="bar-t"><i style="transform:scaleX(${n(r.totalTokens) / max})"></i></span><span class="bar-v">${compact(n(r.totalTokens))} <small>${esc(r.symbol)}</small></span></div>`)
+    .join("");
+}
+

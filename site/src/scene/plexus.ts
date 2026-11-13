@@ -16,12 +16,14 @@ export const VIEWS: View[] = [
   V(0.0, -0.02, 1.45, 0, 0.12, -0.3, 0, 0.55), // 3 read: blocks, full
   V(0.04, 0.0, 1.7, 0, 0.05, 0.8, 0, 0.55), // 4 simulate: scanner, full
   V(0.02, 0.04, 1.65, 0.025, 0.2, 0, 0, 0.78, 2, 0), // 5 cross-chain: ring graph, full
-  V(0.0, -0.02, 1.12, 0.04, 0, 0, 0, 0.85, 0, 0, 2), // 6 zero: orbits, centre
-  V(0.23, 0.1, 0.95, 0.08, 0.3, 0, 0, 0.95), // 7 security: lattice, side
-  V(0.0, 0.0, 1.0, 0, 0, 0, 0.01, 0.55), // 8 tools: wall, full
-  V(0.24, 0.0, 0.95, 0.12, 0.1, 0, 0, 0.95), // 9 roadmap: helix, side
-  V(0.05, -0.05, 1.7, 0.04, 0.95, 0, 0, 0.45), // 10 faq: galaxy, full
-  V(0.0, 0.17, 0.68, 0, 0, 0, 0, 1, 0, 0, 2), // 11 final: logo, centre
+  V(0.05, 0.0, 1.45, 0.02, 0.15, -0.2, 0, 0.6), // 6 trust check: quorum, full
+  V(0.0, -0.02, 1.12, 0.04, 0, 0, 0, 0.85, 0, 0, 2), // 7 zero: orbits, centre
+  V(0.02, -0.02, 1.4, 0, 0.1, -0.22, 0, 0.82), // 8 markets: candles, full
+  V(0.23, 0.1, 0.95, 0.08, 0.3, 0, 0, 0.95), // 9 security: lattice, side
+  V(0.0, 0.0, 1.0, 0, 0, 0, 0.01, 0.55), // 10 tools: wall, full
+  V(0.24, 0.0, 0.95, 0.12, 0.1, 0, 0, 0.95), // 11 roadmap: helix, side
+  V(0.05, -0.05, 1.7, 0.04, 0.95, 0, 0, 0.45), // 12 faq: galaxy, full
+  V(0.0, 0.17, 0.68, 0, 0, 0, 0, 1, 0, 0, 2), // 13 final: logo, centre
 ];
 
 const INK = new THREE.Color("#ECEAE4");

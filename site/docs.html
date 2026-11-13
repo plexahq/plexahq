@@ -9,7 +9,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <script>document.documentElement.classList.add("js")</script>
 </head>
-<body class="page" data-page="docs" data-scene="8">
+<body class="page" data-page="docs" data-scene="10">
   <canvas id="gl" aria-hidden="true"></canvas>
   <div class="vignette" aria-hidden="true"></div>
   <div class="grain" aria-hidden="true"></div>
@@ -23,7 +23,7 @@
         <p class="side-h">01 · Getting started</p>
         <a href="#overview">Overview</a><a href="#quickstart">Quickstart</a><a href="#examples">Things to ask</a>
         <p class="side-h">02 · Reference</p>
-        <a href="#tools">Tools</a><a href="#networks">Networks</a><a href="#layerzero">LayerZero tracking</a>
+        <a href="#tools">Tools</a><a href="#networks">Networks</a><a href="#layerzero">LayerZero tracking</a><a href="#trust-check">Trust check</a><a href="#zro-markets">ZRO &amp; markets</a>
         <p class="side-h">03 · Trust</p>
         <a href="#safety">Safety model</a>
         <p class="side-h">04 · Developers</p>
@@ -38,7 +38,7 @@
           <p class="doc-meta">5 min read · Updated November 2026 · v0.1</p>
           <div class="cards">
             <a class="card" href="#quickstart"><b>Quickstart</b><span>Connect Claude, Claude Code, ChatGPT, Cursor or VS Code in a minute.</span></a>
-            <a class="card" href="#tools"><b>Tools</b><span>All twelve tools with inputs, outputs and an example for each.</span></a>
+            <a class="card" href="#tools"><b>Tools</b><span>All sixteen tools with inputs, outputs and an example for each.</span></a>
             <a class="card" href="#safety"><b>Safety model</b><span>Read-only by design. What Plexa checks before you sign.</span></a>
             <a class="card" href="#http"><b>HTTP endpoints</b><span>The MCP endpoint, health check and live data feed.</span></a>
           </div>
@@ -46,6 +46,8 @@
           <ul>
             <li><b>Built for Zero.</b> LayerZero's new chain is wired in before launch; its zones switch on with one line of configuration.</li>
             <li><b>Cross-chain native.</b> Any LayerZero message can be tracked by its source transaction, with every DVN named.</li>
+            <li><b>Trust, checked.</b> Any LayerZero app's verifier setup and who controls it, read straight from the chain.</li>
+            <li><b>ZRO and markets.</b> ZRO on every chain, and tokenized stocks and ETFs by ticker or by wallet.</li>
             <li><b>Simulation first.</b> Transactions are dry-run on live state and explained before anyone signs anything.</li>
             <li><b>No keys, no accounts.</b> Plexa never asks for a private key and needs no sign-up.</li>
           </ul>
@@ -74,14 +76,14 @@
           <p class="kicker">Getting started</p>
           <h2>Things to ask</h2>
           <div class="asks">
-            <span>"What's in 0xd8dA…6045 on Base?"</span><span>"Is this approval safe to sign?" (paste the calldata)</span><span>"What does this contract do, and is it verified?"</span><span>"Where is my bridge transfer?" (paste the tx hash)</span><span>"What's happening on LayerZero right now?"</span><span>"Which DVNs secure messages to Base?"</span><span>"What did this transaction actually do?"</span><span>"How many USDC exist on Arbitrum?"</span>
+            <span>"What's in 0xd8dA…6045 on Base?"</span><span>"Is this approval safe to sign?" (paste the calldata)</span><span>"What does this contract do, and is it verified?"</span><span>"Where is my bridge transfer?" (paste the tx hash)</span><span>"What's happening on LayerZero right now?"</span><span>"Which DVNs secure messages to Base?"</span><span>"What did this transaction actually do?"</span><span>"How many USDC exist on Arbitrum?"</span><span>"Is the USDT0 bridge on Ethereum safe? Who verifies it?"</span><span>"Where does ZRO live, and is my wallet ready for Zero?"</span><span>"How much tokenized NVIDIA is on BNB Chain?"</span><span>"Which tokenized stocks does this wallet hold?"</span>
           </div>
         </section>
 
         <section id="tools">
           <p class="kicker">02 · Reference</p>
           <h2>Tools</h2>
-          <p>Twelve tools, all read-only. Your assistant picks them automatically; you never need to name one. Chains are given by key (<code>base</code>, <code>ethereum</code>, <code>arbitrum</code>, <code>hyperevm</code>, <code>zero-atlas</code>…) or numeric chain ID.</p>
+          <p>Sixteen tools, all read-only. Your assistant picks them automatically; you never need to name one. Chains are given by key (<code>ethereum</code>, <code>base</code>, <code>arbitrum</code>, <code>bnb</code>, <code>hyperevm</code>, <code>zero-atlas</code>…) or numeric chain ID.</p>
           <div id="tool-ref"></div>
         </section>
 
@@ -97,6 +99,10 @@
               <tr><td><code>base</code></td><td>Base</td><td>8453</td><td>30184</td><td>Live</td></tr>
               <tr><td><code>arbitrum</code></td><td>Arbitrum One</td><td>42161</td><td>30110</td><td>Live</td></tr>
               <tr><td><code>hyperevm</code></td><td>HyperEVM</td><td>999</td><td>30367</td><td>Live</td></tr>
+              <tr><td><code>bnb</code></td><td>BNB Chain</td><td>56</td><td>30102</td><td>Live</td></tr>
+              <tr><td><code>optimism</code></td><td>OP Mainnet</td><td>10</td><td>30111</td><td>Live</td></tr>
+              <tr><td><code>polygon</code></td><td>Polygon PoS</td><td>137</td><td>30109</td><td>Live</td></tr>
+              <tr><td><code>avalanche</code></td><td>Avalanche C-Chain</td><td>43114</td><td>30106</td><td>Live</td></tr>
               <tr><td><code>ethereum-sepolia</code></td><td>Ethereum Sepolia</td><td>11155111</td><td>40161</td><td>Live</td></tr>
               <tr><td><code>arbitrum-sepolia</code></td><td>Arbitrum Sepolia</td><td>421614</td><td>40231</td><td>Live</td></tr>
               <tr><td><code>base-sepolia</code></td><td>Base Sepolia</td><td>84532</td><td>40245</td><td>Live</td></tr>
@@ -120,6 +126,30 @@
               <tr><td><span class="pill">FAILED</span></td><td>Delivery failed on the destination chain.</td></tr>
             </tbody>
           </table></div>
+        </section>
+
+        <section id="trust-check">
+          <p class="kicker">Reference</p>
+          <h2>Trust check</h2>
+          <p>Every LayerZero app (an OApp, or an OFT token) chooses who verifies its messages. <code>lz_app_security</code> reads that choice from the chain, for each connected chain and in both directions, and explains it:</p>
+          <div class="table-wrap"><table class="table">
+            <thead><tr><th>It reports</th><th>Why it matters</th></tr></thead>
+            <tbody>
+              <tr><td>DVNs needed, by name</td><td>How many independent verifiers must sign before a message counts. One is a single point of failure; two or more is the norm for serious apps.</td></tr>
+              <tr><td>Block confirmations</td><td>How long the source chain must settle before verifiers sign.</td></tr>
+              <tr><td>Settings source</td><td>Whether the app set its own values or inherits LayerZero's defaults, which can change without the app's involvement.</td></tr>
+              <tr><td>Owner and delegate</td><td>Who can change peers and verifier settings: a single key, a multisig (with its threshold) or a contract such as a timelock.</td></tr>
+              <tr><td><span class="pill pill-ok">low</span> <span class="pill pill-sig">medium</span> <span class="pill">high</span></td><td>High when any pathway can be approved by one DVN; medium when one key controls the settings; low otherwise. Closed pathways (dead DVN or blocked library) are noted, not scored.</td></tr>
+            </tbody>
+          </table></div>
+          <p>It is an automated read of the configuration at that moment, not an audit of the app's code.</p>
+        </section>
+
+        <section id="zro-markets">
+          <p class="kicker">Reference</p>
+          <h2>ZRO &amp; markets</h2>
+          <p><code>zro_overview</code> reads ZRO's supply on Ethereum, Arbitrum, Base, BNB Chain, OP Mainnet, Polygon and Avalanche. ZRO is a LayerZero OFT at the same address on each, so the supplies add up to the total. Given a wallet, it lists that wallet's ZRO everywhere; LayerZero has said ZRO will pay for gas on Zero.</p>
+          <p><code>stocks_lookup</code> and <code>stocks_portfolio</code> cover tokenized stocks and ETFs issued by Ondo Global Markets on Ethereum and BNB Chain, using Ondo's public token list. They report token supply and holdings. They do not report prices, and Plexa does not offer or trade these tokens.</p>
         </section>
 
         <section id="safety">

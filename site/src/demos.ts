@@ -297,6 +297,285 @@ export function initTrack() {
   return { track };
 }
 
+/* ---------------------------------------------------------------- trust check */
+
+interface Uln { summary: string; requiredDVNs?: string[]; optionalDVNs?: string[]; optionalThreshold?: number; blockConfirmations?: number; settings?: string }
+interface Security {
+  found: boolean; message?: string;
+  app?: { chain: string; address: string; kind: string; name?: string; symbol?: string; explorer?: string };
+  control?: { role: string; address: string; kind: string; detail: string }[];
+  pathways?: { remote: string; outgoing: Uln; incoming: Uln; executor?: string; flags: string[] }[];
+  summary?: { risk: "low" | "medium" | "high"; connectedChains: number; pathwaysChecked: number; typicalSetup?: string; truncated?: string; findings: string[]; notes: string[] };
+}
+
+const RISK_LABEL = { low: "Low risk", medium: "Medium risk", high: "High risk" } as const;
+
+const dvnLine = (u: Uln) => {
+  if (!u.requiredDVNs) return `<span class="muted">${esc(u.summary)}</span>`;
+  const n = u.summary.match(/^(\d+)/)?.[1] ?? "?";
+  const names = [...u.requiredDVNs, ...(u.optionalDVNs?.length ? [`${u.optionalThreshold} of ${u.optionalDVNs.join(" / ")}`] : [])];
+  return `<b class="q q${Math.min(3, Number(n))}">${esc(n)}</b> ${esc(names.join(", "))}`;
+};
+
+export function initTrust() {
+  const form = $<HTMLFormElement>("#trust-form");
+  const chain = $<HTMLSelectElement>("#trust-chain");
+  const addr = $<HTMLInputElement>("#trust-address");
+  const call = $("#trust-call");
+  const out = $("#trust-result");
+  const risk = $("#trust-risk");
+  const presets = [
+    { label: "ZRO token · Ethereum", chain: "ethereum", address: "0x6985884C4392D348587B19cb9eAAf157F13271cd" },
+    { label: "USDT0 · Ethereum", chain: "ethereum", address: "0x6C96dE32CEa08842dcc4058c14d3aaAD7Fa41dee" },
+    { label: "ZRO token · Arbitrum", chain: "arbitrum", address: "0x6985884C4392D348587B19cb9eAAf157F13271cd" },
+  ];
+  $("#trust-presets").innerHTML = presets.map((p, i) => `<button type="button" data-i="${i}">${esc(p.label)}</button>`).join("");
+  $("#trust-presets").addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-i]");
+    if (!b) return;
+    const p = presets[Number(b.dataset.i)]!;
+    chain.value = p.chain;
+    addr.value = p.address;
+    void run();
+  });
+  let ctrl: AbortController | null = null;
+
+  async function run() {
+    ctrl?.abort();
+    ctrl = new AbortController();
+    const a = addr.value.trim();
+    if (!/^0x[0-9a-fA-F]{40}$/.test(a)) {
+      out.innerHTML = `<p class="err">That doesn't look like an address (0x + 40 hex characters).</p>`;
+      return;
+    }
+    const args = { chain: chain.value, address: a, maxPathways: 8 };
+    call.innerHTML = `→ tools/call <b>lz_app_security</b> ${esc(JSON.stringify(args).replace(a, short(a)))}`;
+    risk.className = "risk";
+    risk.textContent = "";
+    out.innerHTML = `<div class="result-empty">Reading ${esc(chainName(chain.value))} and LayerZero's registry…</div>`;
+    try {
+      const { data, ms } = await callTool<Security>("lz_app_security", args, ctrl.signal);
+      call.innerHTML += ` <span class="ms">· ${ms} ms</span>`;
+      out.innerHTML = render(data);
+      if (data.summary) {
+        risk.className = `risk ${data.summary.risk}`;
+        risk.textContent = RISK_LABEL[data.summary.risk];
+      }
+    } catch (e) {
+      if ((e as Error).name === "AbortError") return;
+      out.innerHTML = `<p class="err">${esc((e as Error).message)}</p>`;
+    }
+  }
+
+  function render(d: Security) {
+    if (!d.found || !d.app || !d.summary) return `<p class="tool-d">${esc(d.message ?? "Not a LayerZero app.")}</p>`;
+    const s = d.summary;
+    const title = d.app.symbol ? `${d.app.name ?? d.app.symbol}` : d.app.kind;
+    const control = (d.control ?? [])
+      .map((c) => `<span class="chip ${c.kind === "single key" ? "bad" : c.kind === "multisig" ? "ok" : ""}">${esc(c.role)} · ${esc(c.kind === "multisig" ? c.detail.replace("Safe multisig, ", "multisig ") : c.kind)}</span>`)
+      .join("");
+    const rows = (d.pathways ?? [])
+      .slice(0, 6)
+      .map((p) => `<tr${p.flags.some((f) => f.startsWith("high")) ? ' class="flag"' : ""}><td>${esc(p.remote.replace(/ \(EID \d+\)$/, ""))}</td><td>${dvnLine(p.outgoing)}</td><td>${dvnLine(p.incoming)}</td></tr>`)
+      .join("");
+    const more = (d.pathways?.length ?? 0) > 6 || s.connectedChains > s.pathwaysChecked ? `<p class="muted small">Showing ${Math.min(6, d.pathways?.length ?? 0)} of ${s.connectedChains} connected chains.</p>` : "";
+    const findings = s.findings.length
+      ? `<ul class="findings">${s.findings.map((f) => `<li class="bad">${esc(f)}</li>`).join("")}</ul>`
+      : `<ul class="findings"><li class="ok">No single point of failure found in the pathways checked.</li></ul>`;
+    return `<p class="tool-k">${esc(d.app.kind)} · ${esc(d.app.chain)}</p>
+      <div class="big-num">${esc(title)}<small>${esc(d.app.symbol ?? "")}</small></div>
+      <div class="chips">${control}</div>
+      <table class="paths"><thead><tr><th>Connected chain</th><th>Outgoing · DVNs</th><th>Incoming · DVNs</th></tr></thead><tbody>${rows}</tbody></table>
+      ${more}${findings}`;
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    void run();
+  });
+  return { run };
+}
+
+/* ---------------------------------------------------------------- ZRO everywhere */
+
+interface ZroOverview {
+  supply: { countedOnTheseChains: string; byChain: { chain: string; supply: string; share: string }[]; unavailable?: { chain: string }[] };
+  wallet?: { address: string; totalZro: string; byChain: { chain: string; zro: string }[]; zeroReadiness: string };
+}
+
+const num = (s: string) => Number(s.replace(/,/g, ""));
+const compact = (s: string) => {
+  const n = num(s);
+  if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `${(n / 1e6).toFixed(n >= 1e8 ? 0 : 1)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`;
+  return n.toLocaleString("en-US", { maximumFractionDigits: 4 });
+};
+
+export function initZro() {
+  const bars = $("#zro-bars");
+  const total = $("#zro-total");
+  const meta = $("#zro-meta");
+  const form = $<HTMLFormElement>("#zro-form");
+  const input = $<HTMLInputElement>("#zro-input");
+  const result = $("#zro-result");
+
+  async function load() {
+    try {
+      const { data, ms } = await callTool<ZroOverview>("zro_overview", {});
+      const rows = data.supply.byChain;
+      const max = Math.max(...rows.map((r) => num(r.supply)));
+      // log scale so the smaller chains stay visible next to Ethereum
+      const w = (v: number) => Math.max(0.03, Math.log10(1 + v) / Math.log10(1 + max));
+      total.innerHTML = `${esc(compact(data.supply.countedOnTheseChains))}<small>ZRO counted on ${rows.length} chains</small>`;
+      bars.innerHTML = rows
+        .map((r) => `<div class="bar"><span class="bar-k">${esc(r.chain)}</span><span class="bar-t"><i style="transform:scaleX(${w(num(r.supply))})"></i></span><span class="bar-v">${esc(compact(r.supply))} <small>${esc(r.share)}</small></span></div>`)
+        .join("");
+      meta.textContent = `zro_overview · ${ms} ms`;
+    } catch (e) {
+      meta.textContent = "unavailable";
+      bars.innerHTML = `<p class="err">${esc((e as Error).message)}</p>`;
+    }
+  }
+
+  async function check(address: string) {
+    if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
+      result.innerHTML = `<p class="err">That doesn't look like a wallet address.</p>`;
+      return;
+    }
+    result.innerHTML = `<p class="muted small">Reading 7 chains…</p>`;
+    try {
+      const { data, ms } = await callTool<ZroOverview>("zro_overview", { address });
+      const w = data.wallet!;
+      const ready = num(w.totalZro) > 0;
+      result.innerHTML = `<div class="ready ${ready ? "ok" : "no"}"><b>${ready ? "Zero-ready" : "No ZRO yet"}</b><span>${esc(w.totalZro)} ZRO</span></div>
+        <div class="chips">${w.byChain.map((c) => `<span class="chip ok">${esc(c.chain)} · ${esc(c.zro)}</span>`).join("") || '<span class="chip">none on these chains</span>'}</div>
+        <p class="muted small">${esc(w.zeroReadiness)} <span class="ms">${ms} ms</span></p>`;
+    } catch (e) {
+      result.innerHTML = `<p class="err">${esc((e as Error).message)}</p>`;
+    }
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    void check(input.value.trim());
+  });
+  $("#zro-presets").addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-addr]");
+    if (!b) return;
+    input.value = b.dataset.addr!;
+    void check(input.value);
+  });
+  return { load };
+}
+
+/* ---------------------------------------------------------------- tokenized stocks */
+
+interface StockLookup {
+  found: number | false; message?: string;
+  matches?: { symbol: string; ticker: string; name: string; totalTokens: string; chains: { chain: string; address: string; supply?: string; explorer?: string }[] }[];
+}
+interface StockPortfolio { address: string; positions: number; holdings: { symbol: string; name: string; chain: string; amount: string }[]; checked: string }
+
+export function initStocks() {
+  const form = $<HTMLFormElement>("#stock-form");
+  const input = $<HTMLInputElement>("#stock-input");
+  const call = $("#stock-call");
+  const out = $("#stock-result");
+  const presetsEl = $("#stock-presets");
+  let mode: "lookup" | "portfolio" = "lookup";
+  let ctrl: AbortController | null = null;
+  const presets = {
+    lookup: [
+      { label: "NVIDIA", value: "NVDA" },
+      { label: "Apple", value: "AAPL" },
+      { label: "Tesla", value: "TSLA" },
+      { label: "S&P 500 (SPY)", value: "SPY" },
+      { label: "Nasdaq-100 (QQQ)", value: "QQQ" },
+    ],
+    portfolio: [{ label: "Uniswap v4 PoolManager · Ethereum", value: "0x000000000004444c5dc75cB358380D2e3dE08A90" }],
+  };
+  const renderPresets = () => {
+    presetsEl.innerHTML = presets[mode].map((p, i) => `<button type="button" data-i="${i}">${esc(p.label)}</button>`).join("");
+    input.placeholder = mode === "lookup" ? "Ticker or name, e.g. AAPL" : "0x… wallet or contract";
+  };
+  presetsEl.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-i]");
+    if (!b) return;
+    input.value = presets[mode][Number(b.dataset.i)]!.value;
+    void run();
+  });
+  $$("[data-stock-mode]").forEach((b) =>
+    b.addEventListener("click", () => {
+      mode = b.dataset.stockMode as typeof mode;
+      $$("[data-stock-mode]").forEach((x) => x.classList.toggle("on", x === b));
+      renderPresets();
+      input.value = presets[mode][0]!.value;
+      void run();
+    }),
+  );
+
+  async function run() {
+    ctrl?.abort();
+    ctrl = new AbortController();
+    const v = input.value.trim();
+    if (!v) return;
+    if (mode === "portfolio" && !/^0x[0-9a-fA-F]{40}$/.test(v)) {
+      out.innerHTML = `<p class="err">Paste a wallet or contract address (0x + 40 hex characters).</p>`;
+      return;
+    }
+    const tool = mode === "lookup" ? "stocks_lookup" : "stocks_portfolio";
+    const args = mode === "lookup" ? { query: v } : { address: v, limit: 40 };
+    call.innerHTML = `→ tools/call <b>${tool}</b> ${esc(JSON.stringify(args).replace(v, mode === "portfolio" ? short(v) : v))}`;
+    out.innerHTML = `<div class="result-empty">${mode === "lookup" ? "Reading supply on Ethereum and BNB Chain…" : "Scanning every tokenized stock on two chains…"}</div>`;
+    try {
+      const { data, ms } = await callTool<StockLookup & StockPortfolio>(tool, args, ctrl.signal);
+      call.innerHTML += ` <span class="ms">· ${ms} ms</span>`;
+      out.innerHTML = mode === "lookup" ? renderLookup(data) : renderPortfolio(data);
+    } catch (e) {
+      if ((e as Error).name === "AbortError") return;
+      out.innerHTML = `<p class="err">${esc((e as Error).message)}</p>`;
+    }
+  }
+
+  function renderLookup(d: StockLookup) {
+    if (!d.found || !d.matches?.length) return `<p class="tool-d">${esc(d.message ?? "No match.")}</p>`;
+    const m = d.matches[0]!;
+    const max = Math.max(1, ...m.chains.map((c) => num(c.supply ?? "0")));
+    const bars = m.chains
+      .map((c) => `<div class="bar"><span class="bar-k">${esc(c.chain)}</span><span class="bar-t"><i style="transform:scaleX(${num(c.supply ?? "0") / max})"></i></span><span class="bar-v">${esc(compact(c.supply ?? "0"))}</span></div>`)
+      .join("");
+    const others = d.matches.slice(1).map((x) => `<button type="button" class="chip" data-q="${esc(x.ticker)}">${esc(x.symbol)} · ${esc(x.name)}</button>`).join("");
+    return `<p class="tool-k">${esc(m.symbol)} · tokenized by Ondo Global Markets</p>
+      <div class="big-num">${esc(m.name)}<small>${esc(m.ticker)}</small></div>
+      <dl class="kv"><dt>Tokens on-chain</dt><dd>${esc(m.totalTokens)} ${esc(m.symbol)}</dd>
+      <dt>Contracts</dt><dd>${m.chains.map((c) => (c.explorer ? `<a class="link" href="${esc(c.explorer)}" target="_blank" rel="noopener">${esc(c.chain)} ↗</a>` : esc(c.chain))).join(" · ")}</dd></dl>
+      <div class="bar-list">${bars}</div>
+      ${others ? `<p class="muted small">Also matched</p><div class="chips">${others}</div>` : ""}`;
+  }
+
+  function renderPortfolio(d: StockPortfolio) {
+    const chips = d.holdings.map((h) => `<span class="chip ok" title="${esc(h.name)} · ${esc(h.chain)}">${esc(h.symbol)} ${esc(compact(h.amount))}</span>`).join("");
+    return `<p class="tool-k">Tokenized stocks held</p>
+      <div class="big-num">${d.positions}<small>position${d.positions === 1 ? "" : "s"}</small></div>
+      ${d.positions ? `<div class="chips holdings">${chips}</div>${d.positions > d.holdings.length ? `<p class="muted small">Showing ${d.holdings.length} of ${d.positions}.</p>` : ""}` : `<p class="tool-d">No tokenized stocks or ETFs in this wallet.</p>`}
+      <p class="muted small">Checked ${esc(d.checked)}.</p>`;
+  }
+
+  out.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-q]");
+    if (!b) return;
+    input.value = b.dataset.q!;
+    void run();
+  });
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    void run();
+  });
+  renderPresets();
+  return { run };
+}
+
 /* ---------------------------------------------------------------- countdown */
 
 export function initCountdown(getTarget: () => string = () => ZERO_AT_DEFAULT) {
@@ -328,6 +607,10 @@ const TOOLS: [string, string, string, string][] = [
   ["LayerZero", "lz_latest_messages", "What is moving across LayerZero right now.", "What's happening on LayerZero?"],
   ["LayerZero", "lz_list_messages", "Recent messages from a wallet or an app.", "Show my last five bridge transfers."],
   ["LayerZero", "lz_chain_info", "Endpoints, libraries and DVNs from the registry.", "Which DVNs run on Base?"],
+  ["Trust", "lz_app_security", "Who verifies an app's messages, and who controls it.", "Is this bridge safe to use?"],
+  ["ZRO", "zro_overview", "ZRO on every chain, and a wallet's ZRO everywhere.", "Is my wallet ready for Zero?"],
+  ["Markets", "stocks_lookup", "Tokenized stocks and ETFs, supply on each chain.", "How much tokenized NVIDIA is on BNB Chain?"],
+  ["Markets", "stocks_portfolio", "Every tokenized stock a wallet holds.", "Which stocks does this wallet hold on-chain?"],
 ];
 
 export function initTools() {

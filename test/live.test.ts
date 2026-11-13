@@ -12,6 +12,8 @@ const LIVE = process.env.PLEXA_LIVE === "1";
 const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 const VITALIK = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
 const MAX = "f".repeat(64);
+const ZRO = "0x6985884C4392D348587B19cb9eAAf157F13271cd";
+const UNISWAP_V4_POOL_MANAGER = "0x000000000004444c5dc75cB358380D2e3dE08A90";
 const pad = (hex: string) => hex.replace(/^0x/, "").toLowerCase().padStart(64, "0");
 
 describe.skipIf(!LIVE)("live tools", { timeout: 60_000 }, () => {
@@ -94,4 +96,34 @@ describe.skipIf(!LIVE)("live tools", { timeout: 60_000 }, () => {
     expect(r.found).toBe(true);
     expect(r.messages[0].status).toBeTruthy();
   });
+
+  it("checks a LayerZero app's security setup (ZRO on Ethereum)", async () => {
+    const r = await call("lz_app_security", { chain: "ethereum", address: ZRO, remotes: ["arbitrum", "bnb"] });
+    expect(r.found).toBe(true);
+    expect(r.app.symbol).toBe("ZRO");
+    expect(r.pathways).toHaveLength(2);
+    expect(r.pathways[0].outgoing.requiredDVNs).toContain("LayerZero Labs");
+    expect(["low", "medium", "high"]).toContain(r.summary.risk);
+  });
+
+  it("shows ZRO supply on every chain and a wallet's ZRO", async () => {
+    const r = await call("zro_overview", { address: VITALIK });
+    expect(r.supply.byChain.length).toBe(7);
+    expect(r.supply.byChain[0].chain).toBe("Ethereum");
+    expect(r.wallet.address).toBe(VITALIK);
+  });
+
+  it("looks up a tokenized stock", async () => {
+    const r = await call("stocks_lookup", { query: "NVDA" });
+    expect(r.matches[0].symbol).toBe("NVDAon");
+    expect(r.matches[0].chains.map((c: { chain: string }) => c.chain)).toEqual(["Ethereum", "BNB Chain"]);
+  });
+
+  it("lists tokenized stock holdings (Uniswap v4 PoolManager)", async () => {
+    const r = await call("stocks_portfolio", { address: UNISWAP_V4_POOL_MANAGER, limit: 5 });
+    expect(r.positions).toBeGreaterThan(5);
+    expect(r.holdings).toHaveLength(5);
+    expect(r.unreadable).toBeUndefined();
+  });
 });
+

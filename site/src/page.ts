@@ -15,11 +15,11 @@ const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const narrow = innerWidth < 900;
 
 const SCENES: Record<string, { hero: number; ambient: number; tweak?: (v: View[]) => void }> = {
-  product: { hero: 0, ambient: 10 },
-  docs: { hero: 8, ambient: 8, tweak: (v) => (v[8] = { ...v[8]!, opacity: 0.3 }) },
-  stats: { hero: 0, ambient: 10, tweak: (v) => (v[10] = { ...v[10]!, opacity: 0.35 }) },
-  company: { hero: 7, ambient: 10 },
-  contact: { hero: 10, ambient: 10, tweak: (v) => (v[10] = { ...v[10]!, opacity: 0.5 }) },
+  product: { hero: 0, ambient: 12 },
+  docs: { hero: 10, ambient: 10, tweak: (v) => (v[10] = { ...v[10]!, opacity: 0.3 }) },
+  stats: { hero: 0, ambient: 12, tweak: (v) => (v[12] = { ...v[12]!, opacity: 0.35 }) },
+  company: { hero: 9, ambient: 12 },
+  contact: { hero: 12, ambient: 12, tweak: (v) => (v[12] = { ...v[12]!, opacity: 0.5 }) },
 };
 
 initNav();
@@ -31,7 +31,11 @@ const needsFeed = page === "stats" || page === "product";
 const feed = needsFeed ? new LiveFeed(page === "stats" ? "/api/live?messages=50" : "/api/live") : null;
 
 if (page === "docs") void import("./pages/docs").then((m) => m.initDocs());
-if (page === "stats" && feed) void import("./pages/stats").then((m) => m.initStats(feed));
+if (page === "stats" && feed)
+  void import("./pages/stats").then((m) => {
+    m.initStats(feed);
+    void m.initMarketStats();
+  });
 if (page === "contact") void import("./pages/contact").then((m) => m.initContact());
 feed?.start();
 

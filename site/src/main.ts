@@ -1,5 +1,5 @@
 import "./styles.css";
-import { initConnect, initCountdown, initRead, initSimulate, initTools, initTrack } from "./demos";
+import { initConnect, initCountdown, initRead, initSimulate, initStocks, initTools, initTrack, initTrust, initZro } from "./demos";
 import { bindFeed, LiveFeed, ZERO_AT_DEFAULT } from "./live";
 import { initMotion, revealHero, whenVisible } from "./motion";
 import { initNav } from "./nav";
@@ -16,6 +16,9 @@ initTools();
 const read = initRead();
 const sim = initSimulate();
 const track = initTrack();
+const trust = initTrust();
+const zro = initZro();
+const stocks = initStocks();
 
 let plexus: Plexus | null = null;
 const chapters = initMotion(reduced, (v) => plexus?.setVelocity(v));
@@ -29,6 +32,9 @@ feed.start();
 // Auto-run each live demo once, the first time it scrolls into view.
 whenVisible($("demo-read"), () => void read.run());
 whenVisible($("console"), () => void sim.run());
+whenVisible($("demo-trust"), () => void trust.run());
+whenVisible($("zro-panel"), () => void zro.load(), "top bottom");
+whenVisible($("demo-stocks"), () => void stocks.run());
 whenVisible($("timeline"), () => {
   const pick = () => {
     const m = feed.last?.messages.find((x) => x.status === "DELIVERED") ?? feed.last?.messages[0];

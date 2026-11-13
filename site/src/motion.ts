@@ -138,6 +138,19 @@ export function initMotion(reduced: boolean, onVelocity: (v: number) => void): C
     }),
   );
 
+  // Live demos grow the page as their results arrive. ScrollTrigger only re-measures on
+  // window resize, so without this every trigger below a demo drifts and the scene morphs
+  // at the wrong scroll position.
+  let lastHeight = document.documentElement.scrollHeight;
+  let refreshTimer = 0;
+  new ResizeObserver(() => {
+    const h = document.documentElement.scrollHeight;
+    if (Math.abs(h - lastHeight) < 2) return;
+    lastHeight = h;
+    clearTimeout(refreshTimer);
+    refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 150);
+  }).observe(document.body);
+
   // chapters (home page only): HUD, rail, scroll-scrubbed scene transitions
   const sections = [...document.querySelectorAll<HTMLElement>("[data-chapter]")];
   const listeners: ((i: number, name: string) => void)[] = [];

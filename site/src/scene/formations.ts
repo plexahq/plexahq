@@ -231,6 +231,91 @@ const orbits: Gen = (out, n, r) => {
   }
 };
 
+/** A message at the centre, signed off by a ring of DVNs, inside a hexagonal shield. */
+const quorum: Gen = (out, n, r) => {
+  const k = 7;
+  const nodes: Vec3[] = Array.from({ length: k }, (_, i) => {
+    const a = (i / k) * Math.PI * 2 + 0.3;
+    return [Math.cos(a) * 2.1, Math.sin(a) * 2.1, Math.sin(a * 2) * 0.35];
+  });
+  const hex: Vec3[] = [0, 1, 2, 3, 4, 5].map((i) => {
+    const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+    return [Math.cos(a) * 3.15, Math.sin(a) * 3.15, 0];
+  });
+  const ball = (c: Vec3, radius: number, pow: number): Vec3 => {
+    const a = r() * Math.PI * 2;
+    const t = Math.acos(2 * r() - 1);
+    const rad = Math.pow(r(), pow) * radius;
+    return [c[0] + Math.sin(t) * Math.cos(a) * rad, c[1] + Math.sin(t) * Math.sin(a) * rad, c[2] + Math.cos(t) * rad];
+  };
+  for (let i = 0; i < n; i++) {
+    const u = r();
+    if (u < 0.24) {
+      put(out, i, ball(nodes[Math.floor(r() * k)]!, 0.3, 0.45));
+    } else if (u < 0.54) {
+      // signatures flowing from each verifier into the message
+      const p = nodes[Math.floor(r() * k)]!;
+      const c: Vec3 = [p[0] * 0.45 - p[1] * 0.2, p[1] * 0.45 + p[0] * 0.2, 0.45];
+      put(out, i, add(bez(p, c, [0, 0, 0], r()), jitter(r, 0.04)));
+    } else if (u < 0.66) {
+      put(out, i, ball([0, 0, 0], 0.46, 0.6));
+    } else if (u < 0.95) {
+      const e = Math.floor(r() * 6);
+      const A = hex[e]!;
+      const B = hex[(e + 1) % 6]!;
+      const t = r();
+      put(out, i, add([A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, (r() - 0.5) * 0.12], jitter(r, 0.03)));
+    } else {
+      put(out, i, jitter(r, 8));
+    }
+  }
+};
+
+/** A rising candlestick chart with a moving average and grid: markets, on-chain. */
+const candles: Gen = (out, n, r) => {
+  const N = 26;
+  const pr = rng(77);
+  const cs: { x: number; o: number; c: number; h: number; l: number }[] = [];
+  let p = 0;
+  for (let i = 0; i < N; i++) {
+    const o = p;
+    const c = o + (pr() - 0.36) * 0.75;
+    cs.push({ x: -4.6 + (i / (N - 1)) * 9.2, o, c, h: Math.max(o, c) + pr() * 0.32, l: Math.min(o, c) - pr() * 0.32 });
+    p = c;
+  }
+  const lo = Math.min(...cs.map((c) => c.l));
+  const hi = Math.max(...cs.map((c) => c.h));
+  const ny = (y: number) => -2.1 + ((y - lo) / (hi - lo)) * 4.2;
+  const w = 0.12;
+  for (let i = 0; i < n; i++) {
+    const u = r();
+    const c = cs[Math.floor(r() * N)]!;
+    if (u < 0.58) {
+      const y0 = ny(Math.min(c.o, c.c));
+      const y1 = Math.max(ny(Math.max(c.o, c.c)), y0 + 0.06);
+      const edge = r() < 0.45;
+      const x = edge ? c.x + (r() < 0.5 ? -w : w) : c.x + (r() * 2 - 1) * w;
+      put(out, i, [x, y0 + (y1 - y0) * r(), (r() - 0.5) * 0.14]);
+    } else if (u < 0.74) {
+      put(out, i, [c.x + (r() - 0.5) * 0.015, ny(c.l) + (ny(c.h) - ny(c.l)) * r(), (r() - 0.5) * 0.04]);
+    } else if (u < 0.88) {
+      const t = r() * (N - 1);
+      const k = Math.floor(t);
+      const f = t - k;
+      const a = cs[k]!;
+      const b = cs[Math.min(N - 1, k + 1)]!;
+      const ya = ny((a.o + a.c) / 2);
+      const yb = ny((b.o + b.c) / 2);
+      put(out, i, add([a.x + (b.x - a.x) * f, ya + (yb - ya) * f + 0.42, 0.12], jitter(r, 0.025)));
+    } else if (u < 0.97) {
+      const row = Math.floor(r() * 5);
+      put(out, i, [-5 + r() * 10, -2.1 + row * 1.05, -0.7]);
+    } else {
+      put(out, i, jitter(r, 8));
+    }
+  }
+};
+
 const lattice: Gen = (out, n, r) => {
   // icosahedron edges + vertex clusters
   const t = (1 + Math.sqrt(5)) / 2;
@@ -327,8 +412,8 @@ const logo: Gen = (out, n, r) => {
   }
 };
 
-/** Formation generator per chapter index (0..11). */
-export const FORMATIONS: Gen[] = [plexus, stat, converge, blocks, scanner, ringGraph, orbits, lattice, wall, helix, galaxy, logo];
+/** Formation generator per chapter index (0..13). */
+export const FORMATIONS: Gen[] = [plexus, stat, converge, blocks, scanner, ringGraph, quorum, orbits, candles, lattice, wall, helix, galaxy, logo];
 
 /** Accent indices: which particles take the signal colour, per chapter. */
-export const ACCENT_RATIO = [0.14, 0.04, 0.22, 0.1, 0.18, 0.14, 0.32, 0.12, 0.05, 0.2, 0.12, 0.36];
+export const ACCENT_RATIO = [0.14, 0.04, 0.22, 0.1, 0.18, 0.14, 0.2, 0.32, 0.16, 0.12, 0.05, 0.2, 0.12, 0.36];

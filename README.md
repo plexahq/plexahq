@@ -22,8 +22,12 @@ Ask your assistant things like *"what's in this wallet?"*, *"what does this cont
 | `lz_track_message` | Tracks a cross-chain message by source tx hash, names the DVNs and explains stuck states |
 | `lz_list_messages` | Recent LayerZero messages for a wallet or an OApp |
 | `lz_latest_messages` | What is moving across the whole LayerZero network right now |
+| `lz_app_security` | Security check of any LayerZero app (OApp/OFT): connected chains, DVNs and how many must sign each way, confirmations, executor, and who controls the settings (single key, multisig, contract). Flags single points of failure |
+| `zro_overview` | ZRO supply on each chain, read live, and (optionally) a wallet's ZRO everywhere plus Zero readiness |
+| `stocks_lookup` | Tokenized stocks and ETFs (Ondo Global Markets) by ticker or name: addresses and live token supply per chain. No prices |
+| `stocks_portfolio` | Every tokenized stock or ETF a wallet holds on Ethereum and BNB Chain, in a few batched calls. No prices |
 
-Built-in chains: Zero (ATLAS and Interop zones, placeholders until launch), Ethereum, Arbitrum, Base, HyperEVM, and the Sepolia testnets of Ethereum, Arbitrum and Base.
+Built-in chains: Zero (ATLAS and Interop zones, placeholders until launch), Ethereum, Arbitrum, Base, HyperEVM, BNB Chain, OP Mainnet, Polygon, Avalanche, and the Sepolia testnets of Ethereum, Arbitrum and Base.
 
 ## Quick start
 
@@ -84,6 +88,7 @@ All configuration is through environment variables (see `.env.example`).
 | `PLEXA_RPC_<CHAIN>` | RPC URL for a chain, e.g. `PLEXA_RPC_ZERO_ATLAS`, `PLEXA_RPC_BASE` |
 | `PLEXA_CHAIN_ID_<CHAIN>` | Chain ID (otherwise read from the RPC) |
 | `PLEXA_EXPLORER_<CHAIN>` | Block explorer base URL |
+| `PLEXA_ONDO_TOKENLIST_URL` | Token list for `stocks_*` (defaults to Ondo's public Global Markets list) |
 | `PLEXA_EXTRA_CHAINS` | JSON array of extra chains: `[{"key":"mychain","name":"My Chain","rpcUrl":"https://…"}]` |
 | `PORT`, `HOST` | HTTP server bind address (default `127.0.0.1:3000`) |
 

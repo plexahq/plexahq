@@ -24,7 +24,7 @@
         <p class="lede" data-reveal>Plexa is an MCP gateway for on-chain networks. You add one URL to your AI client, and from then on it can read any wallet, explain any contract, dry-run any transaction and follow any LayerZero message, all in plain conversation. This page walks through what happens between your question and the answer.</p>
         <dl class="meta-row" data-reveal>
           <div><dt>Endpoint</dt><dd><code class="js-mcp-url">https://plexahq.vercel.app/mcp</code></dd></div>
-          <div><dt>Networks</dt><dd>Zero · Ethereum · Base · Arbitrum · HyperEVM</dd></div>
+          <div><dt>Networks</dt><dd>Zero · Ethereum · Base · Arbitrum · BNB · OP · Polygon · Avalanche · HyperEVM</dd></div>
           <div><dt>Cross-chain</dt><dd>The whole LayerZero network</dd></div>
           <div><dt>Access</dt><dd>Free, no wallet, no key</dd></div>
         </dl>
@@ -66,7 +66,7 @@
         </figure>
         <ol class="steps-table">
           <li data-reveal><span class="st-n">01</span><b>You ask</b><p>In plain words, in the client you already use. "Is this approval safe?" "Where is my bridge transfer?"</p><span class="st-k">Your AI client</span></li>
-          <li data-reveal><span class="st-n">02</span><b>A tool is picked</b><p>Your assistant sees Plexa's twelve tools and their inputs, chooses the ones that fit and fills in the details.</p><span class="st-k">MCP tool call</span></li>
+          <li data-reveal><span class="st-n">02</span><b>A tool is picked</b><p>Your assistant sees Plexa's sixteen tools and their inputs, chooses the ones that fit and fills in the details.</p><span class="st-k">MCP tool call</span></li>
           <li data-reveal><span class="st-n">03</span><b>Plexa reads live sources</b><p>RPC nodes for state, LayerZero Scan and the official registry for cross-chain messages, Sourcify for verified code.</p><span class="st-k">Read-only</span></li>
           <li data-reveal><span class="st-n">04</span><b>The answer is checked</b><p>Calls are decoded, proxies followed, transactions simulated, known drainer patterns flagged.</p><span class="st-k">Simulate · decode</span></li>
           <li data-reveal><span class="st-n">05</span><b>You decide</b><p>Your assistant explains the result in plain language. If anything ever needs a signature, it is yours to give.</p><span class="st-k">Your wallet</span></li>
@@ -77,12 +77,14 @@
     <section class="block">
       <div class="wrap">
         <p class="kicker" data-reveal>02 · Tools</p>
-        <h2 class="title" data-split>Four groups. <em>Twelve tools.</em></h2>
+        <h2 class="title" data-split>Six groups. <em>Sixteen tools.</em></h2>
         <div class="groups">
           <article class="group panel" data-reveal><span class="g-i">R</span><h3>Read</h3><p>Live chain data, the moment you ask.</p><ul><li>get_balance</li><li>get_token_info</li><li>get_block</li><li>get_transaction</li><li>list_chains</li></ul></article>
           <article class="group panel" data-reveal><span class="g-i">I</span><h3>Inspect</h3><p>What a contract is and what it holds.</p><ul><li>get_contract_info</li><li>read_contract</li></ul></article>
           <article class="group panel" data-reveal><span class="g-i">P</span><h3>Protect</h3><p>Dry-run before anything is signed.</p><ul><li>simulate_transaction</li></ul></article>
           <article class="group panel" data-reveal><span class="g-i">T</span><h3>Track</h3><p>Every LayerZero message, hop by hop.</p><ul><li>lz_track_message</li><li>lz_latest_messages</li><li>lz_list_messages</li><li>lz_chain_info</li></ul></article>
+          <article class="group panel" data-reveal><span class="g-i">V</span><h3>Verify</h3><p>Who guards a LayerZero app, and who controls it.</p><ul><li>lz_app_security</li></ul></article>
+          <article class="group panel" data-reveal><span class="g-i">M</span><h3>Markets</h3><p>ZRO on every chain, and stocks on-chain.</p><ul><li>zro_overview</li><li>stocks_lookup</li><li>stocks_portfolio</li></ul></article>
         </div>
         <p class="more" data-reveal><a class="link" href="/docs#tools">Full tool reference with inputs and examples →</a></p>
       </div>
@@ -127,6 +129,10 @@
               <tr><td>Base</td><td>8453</td><td>30184</td><td>ETH</td><td><span class="pill pill-ok">Live</span></td></tr>
               <tr><td>Arbitrum One</td><td>42161</td><td>30110</td><td>ETH</td><td><span class="pill pill-ok">Live</span></td></tr>
               <tr><td>HyperEVM</td><td>999</td><td>30367</td><td>HYPE</td><td><span class="pill pill-ok">Live</span></td></tr>
+              <tr><td>BNB Chain</td><td>56</td><td>30102</td><td>BNB</td><td><span class="pill pill-ok">Live</span></td></tr>
+              <tr><td>OP Mainnet</td><td>10</td><td>30111</td><td>ETH</td><td><span class="pill pill-ok">Live</span></td></tr>
+              <tr><td>Polygon PoS</td><td>137</td><td>30109</td><td>POL</td><td><span class="pill pill-ok">Live</span></td></tr>
+              <tr><td>Avalanche C-Chain</td><td>43114</td><td>30106</td><td>AVAX</td><td><span class="pill pill-ok">Live</span></td></tr>
               <tr><td>Sepolia testnets (Ethereum, Arbitrum, Base)</td><td>various</td><td>40161 · 40231 · 40245</td><td>ETH</td><td><span class="pill pill-ok">Live</span></td></tr>
               <tr><td>Every LayerZero chain (messages only)</td><td>—</td><td>100+</td><td>—</td><td><span class="pill pill-ok">Live</span></td></tr>
             </tbody>

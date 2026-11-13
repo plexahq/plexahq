@@ -107,6 +107,58 @@ export const BUILTIN_CHAINS: readonly ChainConfig[] = [
     lzEndpointV2: "0x3a73033c0b1407574c76bdbac67f126f6b4a9aa9",
   },
   {
+    key: "bnb",
+    name: "BNB Chain",
+    chainId: 56,
+    testnet: false,
+    nativeSymbol: "BNB",
+    nativeDecimals: 18,
+    rpcUrl: "https://bsc-rpc.publicnode.com",
+    explorerUrl: "https://bscscan.com",
+    lzEid: 30102,
+    lzChainKey: "bsc",
+    lzEndpointV2: LZ_ENDPOINT_V2_MAINNET,
+  },
+  {
+    key: "optimism",
+    name: "OP Mainnet",
+    chainId: 10,
+    testnet: false,
+    nativeSymbol: "ETH",
+    nativeDecimals: 18,
+    rpcUrl: "https://optimism-rpc.publicnode.com",
+    explorerUrl: "https://optimistic.etherscan.io",
+    lzEid: 30111,
+    lzChainKey: "optimism",
+    lzEndpointV2: LZ_ENDPOINT_V2_MAINNET,
+  },
+  {
+    key: "polygon",
+    name: "Polygon PoS",
+    chainId: 137,
+    testnet: false,
+    nativeSymbol: "POL",
+    nativeDecimals: 18,
+    rpcUrl: "https://polygon-bor-rpc.publicnode.com",
+    explorerUrl: "https://polygonscan.com",
+    lzEid: 30109,
+    lzChainKey: "polygon",
+    lzEndpointV2: LZ_ENDPOINT_V2_MAINNET,
+  },
+  {
+    key: "avalanche",
+    name: "Avalanche C-Chain",
+    chainId: 43114,
+    testnet: false,
+    nativeSymbol: "AVAX",
+    nativeDecimals: 18,
+    rpcUrl: "https://avalanche-c-chain-rpc.publicnode.com",
+    explorerUrl: "https://snowtrace.io",
+    lzEid: 30106,
+    lzChainKey: "avalanche",
+    lzEndpointV2: LZ_ENDPOINT_V2_MAINNET,
+  },
+  {
     key: "ethereum-sepolia",
     name: "Ethereum Sepolia",
     chainId: 11155111,
@@ -270,6 +322,9 @@ export class ChainRegistry {
   }
 }
 
+/** Multicall3 lives at the same address on nearly every EVM chain. */
+export const MULTICALL3 = "0xcA11bde05977b3631167028862bE2a173976CA11";
+
 export function toViemChain(chain: ChainConfig): Chain {
   if (chain.chainId === undefined || !chain.rpcUrl) {
     throw new Error(`Chain ${chain.key} is missing a chain ID or RPC URL`);
@@ -280,6 +335,7 @@ export function toViemChain(chain: ChainConfig): Chain {
     nativeCurrency: { name: chain.nativeSymbol, symbol: chain.nativeSymbol, decimals: chain.nativeDecimals },
     rpcUrls: { default: { http: [chain.rpcUrl] } },
     blockExplorers: chain.explorerUrl ? { default: { name: "Explorer", url: chain.explorerUrl } } : undefined,
+    contracts: { multicall3: { address: MULTICALL3 } },
     testnet: chain.testnet,
   });
 }

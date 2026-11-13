@@ -77,7 +77,7 @@
         <div class="copy">
           <p class="kicker" data-reveal>02 · Connect</p>
           <h2 class="title" data-split>One URL. <em>Every AI</em> you already use.</h2>
-          <p class="body" data-reveal>Plexa speaks the Model Context Protocol, the open standard AI assistants use to reach tools. Add one URL and your assistant gains twelve on-chain tools. No SDK, no API key, no wallet connection.</p>
+          <p class="body" data-reveal>Plexa speaks the Model Context Protocol, the open standard AI assistants use to reach tools. Add one URL and your assistant gains sixteen on-chain tools. No SDK, no API key, no wallet connection.</p>
           <div class="urlbox" data-reveal>
             <code class="js-mcp-url">https://plexahq.vercel.app/mcp</code>
             <button class="copy-btn" data-copy-mcp type="button">Copy</button>
@@ -179,10 +179,37 @@
       </div>
     </section>
 
-    <!-- 06 · ZERO -->
-    <section class="chapter zero" id="zero" data-chapter="6" data-name="Zero">
+    <!-- 06 · TRUST CHECK -->
+    <section class="chapter" id="trust" data-chapter="6" data-name="Trust check">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="kicker" data-reveal>06 · Trust check</p>
+          <h2 class="title" data-split>Who guards <em>the bridge?</em></h2>
+          <p class="body" data-reveal>Every LayerZero app picks its own verifiers. Some make three independent DVNs sign every message; some trust a single one. Plexa reads the setup straight from the chain and tells your AI who verifies, how many must agree, and who holds the keys to change it.</p>
+          <ul class="checks" data-reveal>
+            <li><b>Verifiers</b><span>DVNs and quorum on every connected chain, both directions</span></li>
+            <li><b>Control</b><span>Owner and delegate: one key, a multisig or a contract</span></li>
+            <li><b>Red flags</b><span>Pathways a single DVN can approve alone</span></li>
+          </ul>
+        </div>
+        <div class="panel demo" id="demo-trust" data-reveal>
+          <div class="demo-head"><span class="demo-title">Live trust check</span><span class="risk" id="trust-risk"></span></div>
+          <form class="demo-form" id="trust-form" autocomplete="off">
+            <select id="trust-chain" aria-label="Chain"><option value="ethereum">Ethereum</option><option value="arbitrum">Arbitrum</option><option value="base">Base</option><option value="bnb">BNB Chain</option><option value="optimism">OP Mainnet</option><option value="polygon">Polygon</option><option value="avalanche">Avalanche</option><option value="hyperevm">HyperEVM</option></select>
+            <input id="trust-address" aria-label="LayerZero app address" spellcheck="false" value="0x6985884C4392D348587B19cb9eAAf157F13271cd">
+            <button class="btn btn-sig" type="submit">Check</button>
+          </form>
+          <div class="presets" id="trust-presets"></div>
+          <div class="call-line" id="trust-call"></div>
+          <div class="result" id="trust-result"><div class="result-empty">Press <b>Check</b> to read an app's security setup live.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 · ZERO -->
+    <section class="chapter zero" id="zero" data-chapter="7" data-name="Zero">
       <div class="wrap center">
-        <p class="kicker" data-reveal>06 · Zero</p>
+        <p class="kicker" data-reveal>07 · Zero</p>
         <h2 class="title big" data-split>Zero is coming. <em>Your AI is ready.</em></h2>
         <p class="body center-body" data-reveal>LayerZero's own registry already lists Zero's zones. Plexa is wired for them today: the moment public RPCs go live, one line of configuration switches them on.</p>
         <div class="countdown" id="countdown" data-reveal>
@@ -194,14 +221,60 @@
           <div class="zone" data-reveal><span class="zone-k">Zone</span><b>Interop</b><p>General-purpose EVM. Solidity contracts, Zero-native apps and cross-chain messaging.</p><span class="pill pill-sig">RPC pending · auto-enabled</span></div>
           <div class="zone" data-reveal><span class="zone-k">Zone</span><b>Payments</b><p>Privacy-focused payment rails for institutions, announced alongside Zero.</p><span class="pill">Announced</span></div>
         </div>
+        <div class="zro panel" id="zro-panel" data-reveal>
+          <div class="demo-head"><span class="demo-title"><span class="dot dot-ok"></span> ZRO, live on every chain</span><span class="feed-meta" id="zro-meta">reading…</span></div>
+          <div class="zro-grid">
+            <div class="zro-supply">
+              <div class="big-num" id="zro-total">…<small>ZRO counted</small></div>
+              <div class="bar-list" id="zro-bars"></div>
+            </div>
+            <div class="zro-check">
+              <p class="tool-k">Is your wallet Zero-ready?</p>
+              <p class="zro-lede">Gas on Zero is paid in ZRO. Paste a wallet to find its ZRO on every chain.</p>
+              <form class="track" id="zro-form" autocomplete="off">
+                <input id="zro-input" spellcheck="false" placeholder="0x… wallet address" aria-label="Wallet address">
+                <button class="btn btn-sig" type="submit">Check</button>
+              </form>
+              <div class="presets flat" id="zro-presets"><button type="button" data-addr="0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045">Try vitalik.eth</button></div>
+              <div id="zro-result" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- 07 · SECURITY -->
-    <section class="chapter" id="security" data-chapter="7" data-name="Security">
+    <!-- 08 · MARKETS -->
+    <section class="chapter" id="markets" data-chapter="8" data-name="Markets">
       <div class="wrap split">
         <div class="copy">
-          <p class="kicker" data-reveal>07 · Security</p>
+          <p class="kicker" data-reveal>08 · Markets</p>
+          <h2 class="title" data-split>Wall Street, <em>on-chain.</em></h2>
+          <p class="body" data-reveal>Apple, NVIDIA, Tesla, the S&amp;P 500: hundreds of stocks and ETFs now trade on-chain as tokens, and Ondo moves them between chains over LayerZero. Ask your AI how much of a stock lives on each chain, or what a wallet holds.</p>
+          <ul class="checks" data-reveal>
+            <li><b>Every listing</b><span>Ondo's full catalogue of tokenized stocks and ETFs</span></li>
+            <li><b>Supply</b><span>Tokens in circulation on Ethereum and BNB Chain, live</span></li>
+            <li><b>Holdings</b><span>Every position a wallet holds, scanned in one call</span></li>
+          </ul>
+          <p class="note" data-reveal>Public on-chain data only. Plexa does not price, offer or trade these tokens.</p>
+        </div>
+        <div class="panel demo" id="demo-stocks" data-reveal>
+          <div class="demo-head"><span class="demo-title">Live tool call</span><span class="demo-tabs"><button class="on" data-stock-mode="lookup" type="button">Stock</button><button data-stock-mode="portfolio" type="button">Wallet</button></span></div>
+          <form class="demo-form one" id="stock-form" autocomplete="off">
+            <input id="stock-input" aria-label="Ticker, name or wallet" spellcheck="false" value="NVDA">
+            <button class="btn btn-sig" type="submit">Run</button>
+          </form>
+          <div class="presets" id="stock-presets"></div>
+          <div class="call-line" id="stock-call"></div>
+          <div class="result" id="stock-result"><div class="result-empty">Press <b>Run</b> to read the chain live.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 09 · SECURITY -->
+    <section class="chapter" id="security" data-chapter="9" data-name="Security">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="kicker" data-reveal>09 · Security</p>
           <h2 class="title" data-split>Read-only <em>by design.</em></h2>
           <p class="body" data-reveal>Plexa can look at everything and touch nothing. It never asks for a key, never holds funds and never broadcasts a transaction. When signing arrives, it happens in your own wallet, after a simulation you can read.</p>
         </div>
@@ -219,58 +292,60 @@
       </div>
     </section>
 
-    <!-- 08 · TOOLS -->
-    <section class="chapter" id="tools" data-chapter="8" data-name="Tools">
+    <!-- 10 · TOOLS -->
+    <section class="chapter" id="tools" data-chapter="10" data-name="Tools">
       <div class="wrap">
         <div class="copy wide">
-          <p class="kicker" data-reveal>08 · Tools</p>
-          <h2 class="title" data-split>Twelve tools. <em>Zero guesswork.</em></h2>
+          <p class="kicker" data-reveal>10 · Tools</p>
+          <h2 class="title" data-split>Sixteen tools. <em>Zero guesswork.</em></h2>
         </div>
         <div class="tool-grid" id="tool-grid"></div>
       </div>
     </section>
 
-    <!-- 09 · ROADMAP -->
-    <section class="chapter" id="roadmap" data-chapter="9" data-name="Roadmap">
+    <!-- 11 · ROADMAP -->
+    <section class="chapter" id="roadmap" data-chapter="11" data-name="Roadmap">
       <div class="wrap split">
         <div class="copy">
-          <p class="kicker" data-reveal>09 · Roadmap</p>
+          <p class="kicker" data-reveal>11 · Roadmap</p>
           <h2 class="title" data-split>Reading is <em>step one.</em></h2>
           <p class="body" data-reveal>Every new network gets the same tools, the same safety rules and the same single URL.</p>
         <ol class="road">
-          <li data-reveal><span class="pill pill-ok">Live</span><b>Read · Inspect · Simulate · Track</b><p>Twelve read-only tools across Ethereum, Base, Arbitrum and HyperEVM, plus LayerZero's whole network.</p></li>
+          <li data-reveal><span class="pill pill-ok">Live</span><b>Read · Inspect · Simulate · Track</b><p>Read-only tools across eight EVM chains, plus LayerZero's whole network.</p></li>
+          <li data-reveal><span class="pill pill-ok">New</span><b>Trust check · ZRO · Markets</b><p>Security reads of any LayerZero app, ZRO on every chain, and tokenized stocks and ETFs.</p></li>
           <li data-reveal><span class="pill pill-sig">Nov 30</span><b>Zero mainnet</b><p>ATLAS and Interop zones switched on the day LayerZero publishes RPCs.</p></li>
-          <li data-reveal><span class="pill">Next</span><b>Signing page</b><p>Your AI prepares the transaction, you review the simulation and sign in your own wallet.</p></li>
-          <li data-reveal><span class="pill">Next</span><b>OFT bridging &amp; OApp security review</b><p>Quote and build cross-chain sends; explain an app's DVN and executor setup per pathway.</p></li>
-          <li data-reveal><span class="pill">Later</span><b>Agent wallets with limits</b><p>Session keys with spend caps, allowed contracts and expiry, for agents that act on their own.</p></li>
+          <li data-reveal><span class="pill">Next</span><b>ATLAS market data</b><p>Read-only markets data from ATLAS venues, as soon as LayerZero publishes the interface.</p></li>
+          <li data-reveal><span class="pill">Next</span><b>OFT bridging quotes</b><p>Fees and arrival times for moving tokens between chains, ZRO to Zero included.</p></li>
         </ol>
         </div>
         <div class="visual-space" aria-hidden="true"></div>
       </div>
     </section>
 
-    <!-- 10 · FAQ -->
-    <section class="chapter" id="faq" data-chapter="10" data-name="FAQ">
+    <!-- 12 · FAQ -->
+    <section class="chapter" id="faq" data-chapter="12" data-name="FAQ">
       <div class="wrap split">
         <div class="copy">
-          <p class="kicker" data-reveal>10 · Questions</p>
+          <p class="kicker" data-reveal>12 · Questions</p>
           <h2 class="title" data-split>Asked <em>and answered.</em></h2>
         </div>
         <div class="faq" id="faq-list">
           <details data-reveal><summary>What is MCP?</summary><p>The Model Context Protocol is an open standard that lets AI assistants call external tools. Claude, ChatGPT, Cursor and VS Code all support it. Plexa is an MCP server: you add its URL and your assistant can use its tools.</p></details>
           <details data-reveal><summary>Does Plexa hold my keys or funds?</summary><p>No. Plexa is read-only. It never asks for a private key, never holds assets and never sends a transaction. Future signing will always happen in your own wallet.</p></details>
-          <details data-reveal><summary>Which chains are supported?</summary><p>Ethereum, Base, Arbitrum and HyperEVM today, plus their Sepolia testnets, and the entire LayerZero network for message tracking. Zero's ATLAS and Interop zones switch on at mainnet.</p></details>
+          <details data-reveal><summary>Which chains are supported?</summary><p>Ethereum, Base, Arbitrum, HyperEVM, BNB Chain, OP Mainnet, Polygon and Avalanche today, plus Sepolia testnets, and the entire LayerZero network for message tracking. Zero's ATLAS and Interop zones switch on at mainnet.</p></details>
+          <details data-reveal><summary>Can Plexa trade stocks for me?</summary><p>No. Plexa reads public on-chain data about tokenized stocks and ETFs: which tokens exist, how many sit on each chain and what a wallet holds. It does not price, offer or trade them.</p></details>
+          <details data-reveal><summary>What does the trust check look at?</summary><p>The app's LayerZero configuration on-chain: which chains it connects to, which DVNs must verify each message and how many, block confirmations, the executor, and whether a single key, a multisig or a contract can change those settings. It is an automated read, not an audit of the app's code.</p></details>
           <details data-reveal><summary>What is Zero?</summary><p>Zero is LayerZero's new blockchain, built from specialised zones for trading, interoperability and payments. Mainnet is scheduled for November 30, 2026.</p></details>
           <details data-reveal><summary>Is it free?</summary><p>Yes, during launch. Add the URL and start asking.</p></details>
           <details data-reveal><summary>How does simulation work?</summary><p>Plexa runs your transaction against the chain's live state without broadcasting it, decodes the call using verified contract code, estimates the fee and flags known drainer patterns.</p></details>
           <details data-reveal><summary>Is Plexa affiliated with LayerZero?</summary><p>No. Plexa is an independent project that builds on LayerZero's public infrastructure and APIs.</p></details>
-          <details data-reveal><summary>Where does the data come from?</summary><p>Straight from the source: RPC nodes for chain state, LayerZero Scan and LayerZero's deployment registry for cross-chain messages, and Sourcify for verified contract code.</p></details>
+          <details data-reveal><summary>Where does the data come from?</summary><p>Straight from the source: RPC nodes for chain state, LayerZero Scan and LayerZero's deployment registry for cross-chain messages, Sourcify for verified contract code, and Ondo's public token list for tokenized stocks.</p></details>
         </div>
       </div>
     </section>
 
-    <!-- 11 · FINAL -->
-    <section class="chapter final" id="final" data-chapter="11" data-name="Begin">
+    <!-- 13 · FINAL -->
+    <section class="chapter final" id="final" data-chapter="13" data-name="Begin">
       <div class="wrap center">
         <h2 class="display final-title" data-split>Give your AI <em>a pulse.</em></h2>
         <p class="body center-body" data-reveal>One URL. Every chain. Nothing to sign until you say so.</p>

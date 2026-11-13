@@ -3,6 +3,7 @@ import { getAddress } from "viem";
 import { z } from "zod";
 import type { ChainRegistry } from "../chains.js";
 import { compactMessage, findChains, getMetadata, scanGet, summarizeChain, summarizeMessage, type LzNetwork } from "../layerzero.js";
+import { checkAppSecurity } from "../lzsecurity.js";
 import { safe } from "../result.js";
 
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, openWorldHint: true } as const;
@@ -128,5 +129,26 @@ export function registerLayerZeroTools(server: McpServer, registry: ChainRegistr
       const { data } = await scanGet(n, path);
       return { count: data.length, messages: data.slice(0, max).map((m) => compactMessage(m, n)) };
     }),
+  );
+
+  server.registerTool(
+    "lz_app_security",
+    {
+      title: "LayerZero app security check",
+      description:
+        "Checks a LayerZero V2 app (OApp or OFT) straight from the chain: which chains it trusts, how many DVNs must verify each incoming and outgoing message and which ones, block confirmations, executor, and who can change the settings (single key, multisig or contract). Flags single points of failure, such as a pathway that one DVN can approve alone. An automated read of on-chain configuration, not an audit.",
+      inputSchema: {
+        chain: z.string().describe(`Chain the app is deployed on. Known chains: ${registry.keys().join(", ")}`),
+        address: z.string().regex(/^0x[0-9a-fA-F]{40}$/).describe("OApp, OFT or OFT adapter contract address"),
+        remotes: z
+          .array(z.string())
+          .max(10)
+          .optional()
+          .describe('Only check these remote chains (Plexa chain key, LayerZero chain key or EID), e.g. ["arbitrum", "bnb"]'),
+        maxPathways: z.number().int().min(1).max(30).optional().describe("Max connected chains to check (default 12)"),
+      },
+      annotations: READ_ONLY,
+    },
+    safe(async ({ chain, address, remotes, maxPathways }) => checkAppSecurity(registry, chain, address, { remotes, maxPathways })),
   );
 }
