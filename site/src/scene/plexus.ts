@@ -6,8 +6,9 @@ import { ACCENT_RATIO, CHAIN_NODES, FORMATIONS, SATELLITES, bow, nodeLayouts, rn
  * Where and how each formation sits on screen. x/y are fractions of the visible width/height.
  * "side" views sit in the free right column; "full" views (scale > 1.3) fill the screen behind content.
  */
-export interface View { x: number; y: number; scale: number; spin: number; rotX: number; rotY: number; noise: number; opacity: number; graph: 0 | 1 | 2; labels: number }
-const V = (x: number, y: number, scale: number, spin: number, rotX: number, rotY: number, noise: number, opacity: number, graph: 0 | 1 | 2 = 0, labels = 0): View => ({ x, y, scale, spin, rotX, rotY, noise, opacity, graph, labels });
+/** mask: where text sits, so particles dim there (0 none, 1 left column, 2 centre). */
+export interface View { x: number; y: number; scale: number; spin: number; rotX: number; rotY: number; noise: number; opacity: number; graph: 0 | 1 | 2; labels: number; mask: number }
+const V = (x: number, y: number, scale: number, spin: number, rotX: number, rotY: number, noise: number, opacity: number, graph: 0 | 1 | 2 = 0, labels = 0, mask = 1): View => ({ x, y, scale, spin, rotX, rotY, noise, opacity, graph, labels, mask });
 export const VIEWS: View[] = [
   V(0.22, 0.0, 1.0, 0.05, 0.18, 0, 0, 1, 1, 1), // 0 hero: plexus, side
   V(0.02, 0.0, 1.75, 0.012, 0, 0, 0.14, 0.6), // 1 gap: static, full
@@ -15,12 +16,12 @@ export const VIEWS: View[] = [
   V(0.0, -0.02, 1.45, 0, 0.12, -0.3, 0, 0.55), // 3 read: blocks, full
   V(0.04, 0.0, 1.7, 0, 0.05, 0.8, 0, 0.55), // 4 simulate: scanner, full
   V(0.02, 0.04, 1.65, 0.025, 0.2, 0, 0, 0.78, 2, 0), // 5 cross-chain: ring graph, full
-  V(0.0, -0.02, 1.12, 0.04, 0, 0, 0, 0.85), // 6 zero: orbits, centre
+  V(0.0, -0.02, 1.12, 0.04, 0, 0, 0, 0.85, 0, 0, 2), // 6 zero: orbits, centre
   V(0.23, 0.1, 0.95, 0.08, 0.3, 0, 0, 0.95), // 7 security: lattice, side
   V(0.0, 0.0, 1.0, 0, 0, 0, 0.01, 0.55), // 8 tools: wall, full
   V(0.24, 0.0, 0.95, 0.12, 0.1, 0, 0, 0.95), // 9 roadmap: helix, side
   V(0.05, -0.05, 1.7, 0.04, 0.95, 0, 0, 0.45), // 10 faq: galaxy, full
-  V(0.0, 0.17, 0.68, 0, 0, 0, 0, 1), // 11 final: logo, centre
+  V(0.0, 0.17, 0.68, 0, 0, 0, 0, 1, 0, 0, 2), // 11 final: logo, centre
 ];
 
 const INK = new THREE.Color("#ECEAE4");
@@ -32,11 +33,19 @@ const pointsVert = /* glsl */ `
   attribute vec3 aA; attribute vec3 aC; attribute vec3 aF; attribute float aSeed;
   uniform mat4 uMA, uMC;
   uniform float uT, uIntro, uTime, uSize, uPixelRatio, uMouseStrength, uBoost;
-  uniform float uNoiseA, uNoiseC, uAccA, uAccC, uOpA, uOpC, uFloodOp;
+  uniform float uNoiseA, uNoiseC, uAccA, uAccC, uOpA, uOpC, uFloodOp, uMaskA, uMaskC, uMaskStrength;
   uniform vec3 uMouse;
   varying float vSeed; varying float vAlpha; varying float vAccent;
 
   float ease(float x) { x = clamp(x, 0.0, 1.0); return x * x * (3.0 - 2.0 * x); }
+
+  // How much text sits at this screen position: 1 left column, 2 centred copy, 3 everywhere (phones).
+  float maskOf(float type, vec2 ndc) {
+    if (type < 0.5) return 0.0;
+    if (type < 1.5) return smoothstep(0.12, -0.32, ndc.x);
+    if (type < 2.5) return 1.0 - smoothstep(0.2, 0.75, length(vec2(ndc.x * 0.85, ndc.y * 1.25)));
+    return 1.0;
+  }
 
   // The full-screen "storm" between formations: a disk of stardust that swirls with scroll.
   vec3 storm(vec3 f, float s) {
@@ -65,11 +74,13 @@ const pointsVert = /* glsl */ `
     p += normalize(dm + vec3(1e-4)) * smoothstep(1.6, 0.0, dist) * uMouseStrength;
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     gl_Position = projectionMatrix * mv;
-    gl_PointSize = uSize * (0.55 + s * 0.95) * (1.0 + flood * 0.9) * uPixelRatio * (11.0 / max(1.0, -mv.z));
+    gl_PointSize = uSize * (0.55 + s * 0.95) * (1.0 + flood * 0.35) * uPixelRatio * (11.0 / max(1.0, -mv.z));
     vSeed = s;
     float acc = mix(mix(uAccA, uAccC, t2), 0.26, flood);
     vAccent = step(1.0 - acc, fract(s * 7.13));
     vAlpha = smoothstep(28.0, 6.5, -mv.z) * mix(mix(uOpA, uOpC, t2), uFloodOp, flood);
+    vec2 ndc = gl_Position.xy / gl_Position.w;
+    vAlpha *= 1.0 - uMaskStrength * mix(maskOf(uMaskA, ndc), maskOf(uMaskC, ndc), t2);
   }`;
 const pointsFrag = /* glsl */ `
   uniform vec3 uInk; uniform vec3 uSig;
@@ -123,7 +134,7 @@ export class Plexus {
   private views: View[];
   private pair: [number, number] = [-1, -1];
   private tCur = 0;
-  private tTarget = 0;
+  private target = { a: 0, c: 1, t: 0 };
   private graphGroup = new THREE.Group();
   private graphView = -1;
   private graphOpacity = 0;
@@ -184,7 +195,7 @@ export class Plexus {
         uT: { value: 0 }, uIntro: { value: opts.reduced ? 1 : 0 }, uTime: { value: 0 }, uSize: { value: 3.2 },
         uPixelRatio: { value: this.renderer.getPixelRatio() }, uMouseStrength: { value: opts.reduced ? 0 : 0.42 }, uBoost: { value: 0 },
         uNoiseA: { value: 0 }, uNoiseC: { value: 0 }, uAccA: { value: 0.14 }, uAccC: { value: 0.14 }, uOpA: { value: 1 }, uOpC: { value: 1 },
-        uFloodOp: { value: 1.25 }, uMouse: { value: this.mouse }, uInk: { value: INK }, uSig: { value: SIG },
+        uFloodOp: { value: 0.95 }, uMaskA: { value: 1 }, uMaskC: { value: 1 }, uMaskStrength: { value: 0.8 }, uMouse: { value: this.mouse }, uInk: { value: INK }, uSig: { value: SIG },
       },
     });
     this.points = new THREE.Points(geo, this.mat);
@@ -338,27 +349,69 @@ export class Plexus {
 
   /**
    * Scroll-driven morph from view a to view c. t = 0 shows a, t = 0.5 is the full-screen storm, t = 1 shows c.
+   * The scene follows this target at a capped speed (see advance), so fast scrolling never strobes.
    */
   setTransition(a: number, c: number, t: number) {
-    if (this.opts.reduced) t = t < 0.5 ? 0 : 1;
-    if (a !== this.pair[0] || c !== this.pair[1]) {
-      this.pair = [a, c];
-      (this.aA.array as Float32Array).set(this.formation(a));
-      (this.aC.array as Float32Array).set(this.formation(c));
-      this.aA.needsUpdate = this.aC.needsUpdate = true;
-      const u = this.mat.uniforms;
-      const va = this.views[a]!;
-      const vc = this.views[c]!;
-      const narrowDim = this.isNarrow() ? 0.62 : 1;
-      u.uNoiseA!.value = va.noise;
-      u.uNoiseC!.value = vc.noise;
-      u.uAccA!.value = ACCENT_RATIO[a];
-      u.uAccC!.value = ACCENT_RATIO[c];
-      u.uOpA!.value = va.opacity * narrowDim;
-      u.uOpC!.value = vc.opacity * narrowDim;
-      this.tCur = t;
+    this.target = { a, c, t: this.opts.reduced ? (t < 0.5 ? 0 : 1) : t };
+    if (this.pair[0] < 0) {
+      this.applyPair(a, c);
+      this.tCur = this.target.t;
     }
-    this.tTarget = t;
+  }
+
+  private applyPair(a: number, c: number) {
+    if (a === this.pair[0] && c === this.pair[1]) return;
+    this.pair = [a, c];
+    (this.aA.array as Float32Array).set(this.formation(a));
+    (this.aC.array as Float32Array).set(this.formation(c));
+    this.aA.needsUpdate = this.aC.needsUpdate = true;
+    const u = this.mat.uniforms;
+    const va = this.views[a]!;
+    const vc = this.views[c]!;
+    const narrow = this.isNarrow();
+    u.uNoiseA!.value = va.noise;
+    u.uNoiseC!.value = vc.noise;
+    u.uAccA!.value = ACCENT_RATIO[a];
+    u.uAccC!.value = ACCENT_RATIO[c];
+    u.uOpA!.value = va.opacity * (narrow ? 0.62 : 1);
+    u.uOpC!.value = vc.opacity * (narrow ? 0.62 : 1);
+    u.uMaskA!.value = narrow ? 3 : va.mask;
+    u.uMaskC!.value = narrow ? 3 : vc.mask;
+    u.uMaskStrength!.value = narrow ? 0.72 : 0.8;
+  }
+
+  /**
+   * Moves the morph toward the scroll target at no more than ~1.4 units/s (a full morph takes at least ~0.7s).
+   * Switching to a different pair happens either at a shared endpoint (seamless) or inside the storm,
+   * which is identical for every pair, so skipping several chapters at once morphs straight to the last one.
+   */
+  private advance(dt: number) {
+    const T = this.target;
+    const max = 1.4 * dt;
+    const stepTo = (goal: number, linear = false) => {
+      const d = goal - this.tCur;
+      const want = linear ? d : d * Math.min(1, dt * 6);
+      this.tCur += Math.max(-max, Math.min(max, want));
+    };
+    if (this.opts.reduced) {
+      this.applyPair(T.a, T.c);
+      this.tCur = T.t;
+      return;
+    }
+    const [a, c] = this.pair;
+    if (T.a === a && T.c === c) return stepTo(T.t);
+    const shown = this.tCur < 0.004 ? a : this.tCur > 0.996 ? c : -1;
+    if (shown >= 0 && (T.a === shown || T.c === shown)) {
+      this.applyPair(T.a, T.c);
+      this.tCur = T.a === shown ? 0 : 1;
+      return stepTo(T.t);
+    }
+    if (Math.abs(this.tCur - 0.5) < 0.015) {
+      this.applyPair(T.a, T.c);
+      this.tCur = 0.5;
+      return stepTo(T.t);
+    }
+    stepTo(0.5, true);
   }
 
   /** Hold a single view (sub-pages). */
@@ -375,7 +428,7 @@ export class Plexus {
 
   /** Scroll velocity briefly agitates the field. */
   setVelocity(v: number) {
-    this.boost = Math.min(0.12, Math.abs(v) * 0.004);
+    this.boost = Math.min(0.05, Math.abs(v) * 0.002);
   }
 
   private nodeIndex(chain: string): number {
@@ -503,8 +556,7 @@ export class Plexus {
     const dt = Math.min((now - this.last) / 1000, 0.05);
     this.last = now;
     this.time += dt;
-    // ease the scrubbed progress so the morph glides even on coarse wheels
-    this.tCur += (this.tTarget - this.tCur) * Math.min(1, dt * 7);
+    this.advance(dt);
     const u = this.mat.uniforms;
     u.uT!.value = this.tCur;
     u.uTime!.value = this.time;

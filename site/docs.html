@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Documentation · Plexa</title>
-  <meta name="description" content="Plexa documentation: quickstart for Claude, Claude Code, ChatGPT, Cursor and VS Code, the full tool reference, networks, LayerZero tracking, safety model, self-hosting and HTTP endpoints.">
+  <meta name="description" content="Plexa documentation: quickstart for Claude, Claude Code, ChatGPT, Cursor and VS Code, the full tool reference, networks, LayerZero tracking, safety model and HTTP endpoints.">
   <meta name="theme-color" content="#0A0B0E">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <script>document.documentElement.classList.add("js")</script>
@@ -27,7 +27,7 @@
         <p class="side-h">03 · Trust</p>
         <a href="#safety">Safety model</a>
         <p class="side-h">04 · Developers</p>
-        <a href="#self-host">Self-hosting</a><a href="#http">HTTP endpoints</a>
+        <a href="#http">HTTP endpoints</a>
       </aside>
 
       <article class="prose" id="doc">
@@ -40,7 +40,7 @@
             <a class="card" href="#quickstart"><b>Quickstart</b><span>Connect Claude, Claude Code, ChatGPT, Cursor or VS Code in a minute.</span></a>
             <a class="card" href="#tools"><b>Tools</b><span>All twelve tools with inputs, outputs and an example for each.</span></a>
             <a class="card" href="#safety"><b>Safety model</b><span>Read-only by design. What Plexa checks before you sign.</span></a>
-            <a class="card" href="#self-host"><b>Self-hosting</b><span>Run your own Plexa with your own RPCs, locally or on any host.</span></a>
+            <a class="card" href="#http"><b>HTTP endpoints</b><span>The MCP endpoint, health check and live data feed.</span></a>
           </div>
           <h3>What sets it apart</h3>
           <ul>
@@ -138,25 +138,6 @@
           <p>Simulation reflects the chain state at the moment it runs; state can change before a real transaction is mined.</p>
         </section>
 
-        <section id="self-host">
-          <p class="kicker">04 · Developers</p>
-          <h2>Self-hosting</h2>
-          <p>Plexa is open source. Run it with your own RPC endpoints, locally over stdio or as a remote HTTP server.</p>
-          <pre class="code"><code>git clone https://github.com/plexahq/plexahq && cd plexahq
-npm install && npm run build
-node dist/stdio.js                  # local, for Claude Desktop / Cursor
-HOST=0.0.0.0 PORT=3000 npm start    # remote, MCP at /mcp</code></pre>
-          <div class="table-wrap"><table class="table">
-            <thead><tr><th>Variable</th><th>Purpose</th></tr></thead>
-            <tbody>
-              <tr><td><code>PLEXA_RPC_&lt;CHAIN&gt;</code></td><td>RPC URL for a chain, e.g. <code>PLEXA_RPC_ZERO_ATLAS</code>, <code>PLEXA_RPC_BASE</code></td></tr>
-              <tr><td><code>PLEXA_CHAIN_ID_&lt;CHAIN&gt;</code></td><td>Chain ID (otherwise read from the RPC)</td></tr>
-              <tr><td><code>PLEXA_EXPLORER_&lt;CHAIN&gt;</code></td><td>Block explorer base URL</td></tr>
-              <tr><td><code>PLEXA_EXTRA_CHAINS</code></td><td>JSON array of additional EVM chains</td></tr>
-              <tr><td><code>PORT</code>, <code>HOST</code></td><td>HTTP bind address (default <code>127.0.0.1:3000</code>)</td></tr>
-            </tbody>
-          </table></div>
-        </section>
 
         <section id="http">
           <p class="kicker">Developers</p>
@@ -169,7 +150,7 @@ HOST=0.0.0.0 PORT=3000 npm start    # remote, MCP at /mcp</code></pre>
               <tr><td><code>GET /api/live</code></td><td>Latest LayerZero messages and block heights. <code>?messages=1…50</code>. Cached at the edge for 10 seconds.</td></tr>
             </tbody>
           </table></div>
-          <p>Questions or something missing? <a class="link" href="/contact">Get in touch</a> or open an issue on <a class="link" href="https://github.com/plexahq/plexahq/issues" target="_blank" rel="noopener">GitHub</a>.</p>
+          <p>Questions or something missing? <a class="link" href="/contact">Get in touch</a>.</p>
         </section>
       </article>
 

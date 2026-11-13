@@ -28,19 +28,21 @@
     <section class="block tight">
       <div class="wrap split contact">
         <div class="channels">
-          <div class="channel" data-reveal><span class="kpi-k">GitHub</span><a class="ch-v" href="https://github.com/plexahq/plexahq/issues" target="_blank" rel="noopener">plexahq/plexahq ↗</a><p>Bugs, feature requests and questions. Public, and the fastest way to reach the team.</p></div>
-          <div class="channel" data-reveal><span class="kpi-k">Security</span><a class="ch-v" href="https://github.com/plexahq/plexahq/security" target="_blank" rel="noopener">Report privately ↗</a><p>Found a vulnerability? Please report it privately through GitHub's security tab instead of a public issue.</p></div>
+          <div class="channel" data-reveal><span class="kpi-k">Message</span><span class="ch-v">The form on this page</span><p>Goes straight to the team, privately. Nothing you send is published.</p></div>
+          <div class="channel" data-reveal><span class="kpi-k">Security</span><span class="ch-v">Report privately</span><p>Found a vulnerability? Choose "Security" as the topic. Reports are read first.</p></div>
           <div class="channel" data-reveal><span class="kpi-k">Docs</span><a class="ch-v" href="/docs">Documentation →</a><p>Most setup questions are answered in the quickstart and the tool reference.</p></div>
         </div>
         <form class="panel form" id="contact-form" data-reveal autocomplete="on">
-          <div class="demo-head"><span class="demo-title">Message Plexa</span><span>via GitHub</span></div>
+          <div class="demo-head"><span class="demo-title">Message Plexa</span><span>private</span></div>
           <div class="form-body">
-            <label>Name<input name="name" required maxlength="80"></label>
-            <label>Organisation <small>optional</small><input name="org" maxlength="80"></label>
-            <label>Topic<select name="topic"><option>Getting started</option><option>Integration</option><option>Partnership</option><option>Press</option><option>Feedback</option><option>Other</option></select></label>
+            <label>Name<input name="name" required maxlength="80" autocomplete="name"></label>
+            <label>Email<input name="email" type="email" required maxlength="120" autocomplete="email"></label>
+            <label>Organisation <small>optional</small><input name="org" maxlength="80" autocomplete="organization"></label>
+            <label>Topic<select name="topic"><option>Getting started</option><option>Integration</option><option>Partnership</option><option>Security</option><option>Press</option><option>Feedback</option><option>Other</option></select></label>
             <label>Message<textarea name="message" rows="6" required maxlength="4000"></textarea></label>
-            <p class="form-note">Sending opens a pre-filled GitHub issue in a new tab. Issues are public, so please don't include anything private. For security reports, use the private channel on the left.</p>
-            <button class="btn btn-sig" type="submit">Open as GitHub issue <span aria-hidden="true">↗</span></button>
+            <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <p class="form-note" id="form-status">We reply by email, usually within a couple of days.</p>
+            <button class="btn btn-sig" type="submit">Send message <span aria-hidden="true">→</span></button>
           </div>
         </form>
       </div>

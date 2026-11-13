@@ -393,7 +393,11 @@ body:not(.is-loading) .loader { opacity: 0; visibility: hidden; }
 .menu-open .menu-btn i:last-child { top: 20px; transform: rotate(-45deg); }
 .menu { position: fixed; inset: 0; z-index: 19; background: rgba(10, 11, 14, 0.985); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
   display: flex; flex-direction: column; justify-content: space-between; padding: 110px var(--gut) 40px; opacity: 0; transform: translateY(-12px); transition: opacity 0.5s var(--ease), transform 0.5s var(--ease); }
-.menu-open .menu { opacity: 1; transform: none; }
+.menu-open .menu { opacity: 1; transform: none; pointer-events: auto; }
+.menu { pointer-events: none; }
+.menu[hidden] { display: none; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.form-note.ok { color: var(--ok); } .form-note.err { color: var(--bad); }
 .menu-links { display: flex; flex-direction: column; }
 .menu-links a { display: flex; align-items: baseline; gap: 18px; font-size: clamp(36px, 9vw, 64px); font-weight: 600; letter-spacing: -0.04em; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .menu-links a span { font-family: var(--mono); font-size: 12px; font-weight: 400; letter-spacing: 0.1em; color: var(--sig); }
@@ -585,3 +589,8 @@ body:not(.is-loading) .loader { opacity: 0; visibility: hidden; }
   .meta-row { grid-template-columns: 1fr; }
   .bar { grid-template-columns: minmax(0, 110px) 1fr 60px; }
 }
+
+/* legibility over the particle field */
+.display, .title, .statement, .page-title { text-shadow: 0 2px 30px rgba(10, 11, 14, 0.85); }
+.lede, .body, .eyebrow, .kicker, .works, .note, .prose p, .prose li, .prose-col p, .road p, .faq summary, .faq details p, .steps-table p, .pr p, .group p, .channel p { text-shadow: 0 1px 14px rgba(10, 11, 14, 0.95), 0 0 2px rgba(10, 11, 14, 0.9); }
+.lede, .body, .prose p, .prose li, .prose-col p { color: #b4b7bd; }

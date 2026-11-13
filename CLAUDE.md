@@ -1,6 +1,6 @@
 # Plexa: project notes
 
-Plexa is an MCP gateway that connects AI clients (Claude, Claude Code, ChatGPT, Cursor, VS Code) to LayerZero's **Zero** chain, EVM chains and LayerZero cross-chain messaging. Twelve tools, all read-only. Live at https://plexahq.vercel.app (MCP endpoint `/mcp`). Repo `plexahq/plexahq` is public, default branch `main`.
+Plexa is an MCP gateway that connects AI clients (Claude, Claude Code, ChatGPT, Cursor, VS Code) to LayerZero's **Zero** chain, EVM chains and LayerZero cross-chain messaging. Twelve tools, all read-only. Live at https://plexahq.vercel.app (MCP endpoint `/mcp`). Repo `plexahq/plexahq`, default branch `main`. It is public only because Vercel Hobby can't deploy private org repos; the owner wants the code private, so make it private once on Vercel Pro. The website must never link to GitHub or the source code.
 
 The owner writes in Turkish; reply in Turkish. Website copy is English.
 
@@ -19,6 +19,7 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
   - `web.ts`: shared Request→Response handlers for `/mcp`, `/health` and `/api/live?messages=1..50`.
   - `http.ts`: Node server. `stdio.ts`: local entry.
 - `api/*.js`: Vercel functions that import `../dist/web.js`.
+  - `api/contact.js`: contact form. Saves each message as private JSON in Vercel Blob store `plexa-contact` (`contact/YYYY-MM-DD/...`), via `BLOB_READ_WRITE_TOKEN`. Read them in Vercel → Storage.
 - `site/`: Vite multi-page site, built into `site-dist/`.
   - Pages: `index.html` (home, 12 chapters `data-chapter` 0–11), plus `product`, `docs`, `stats`, `company`, `contact`.
   - `partials/nav.html` and `partials/footer.html` are inlined with `<!--#include name-->` by a plugin in `vite.config.ts`.
@@ -33,6 +34,8 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
     - Each particle has 3 targets: formation A, a full-screen "storm" and formation C. `uT` runs 0..1, with the storm at 0.5.
     - `VIEWS` places each formation: scale > 1.3 means a full-screen backdrop, otherwise it sits in the free right column.
     - Graph overlay (nodes, threads, live pulses) shows for views with `graph` 1 (sphere) or 2 (ring).
+    - `mask` on each view dims particles behind text (1 left column, 2 centre; phones dim everywhere). Keep copy readable.
+    - Scroll sets a target; `advance()` moves `tCur` at most ~1.4/s and switches formation pairs only at a shared endpoint or inside the storm, so fast scrolling shows one storm, not a strobe.
 - Design tokens:
   - Colours: background `#0A0B0E`, signal orange `#FF5B1F`, verified teal `#2FD3B5`.
   - Fonts: Familjen Grotesk and Fragment Mono, via @fontsource.
@@ -53,7 +56,7 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
 - Hobby is for non-commercial use only, so upgrade to Pro before launch. Public RPCs are rate-limited, so add our own RPC keys (Alchemy, Chainstack) as env vars when traffic grows.
 
 ## Open items
-- Contact: no email or X handle yet. Enable GitHub private vulnerability reporting.
+- Contact: no email or X handle yet; the form stores messages in Blob (no email notification yet).
 - No Open Graph image. Custom domain comes later (Vercel → Settings → Domains).
 - Product roadmap: signing page, OFT bridging quotes, OApp DVN/security review, lzATLAS market data, agent wallets with limits.
 - Merged branches that can be deleted: `claude/mcp-core`, `site/v1`, `site/v2`.

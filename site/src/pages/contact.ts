@@ -1,14 +1,27 @@
-/** Contact form: composes a pre-filled GitHub issue (no backend, nothing stored by us). */
+/** Contact form: posts to /api/contact, which stores the message privately in Vercel Blob. */
 export function initContact() {
   const form = document.getElementById("contact-form") as HTMLFormElement | null;
-  if (!form) return;
-  form.addEventListener("submit", (e) => {
+  const status = document.getElementById("form-status");
+  if (!form || !status) return;
+  const button = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const data = new FormData(form);
-    const get = (k: string) => String(data.get(k) ?? "").trim();
-    const title = `[${get("topic")}] ${get("message").split("\n")[0]!.slice(0, 70)}`;
-    const body = [`**From:** ${get("name")}${get("org") ? ` (${get("org")})` : ""}`, `**Topic:** ${get("topic")}`, "", get("message")].join("\n");
-    const url = `https://github.com/plexahq/plexahq/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
-    window.open(url, "_blank", "noopener");
+    const data = Object.fromEntries(new FormData(form).entries());
+    button.disabled = true;
+    status.className = "form-note";
+    status.textContent = "Sending…";
+    try {
+      const res = await fetch("/api/contact", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(body.error ?? "Something went wrong. Please try again.");
+      form.reset();
+      status.className = "form-note ok";
+      status.textContent = "Thanks, your message reached the team. We'll reply by email.";
+    } catch (err) {
+      status.className = "form-note err";
+      status.textContent = (err as Error).message;
+    } finally {
+      button.disabled = false;
+    }
   });
 }
