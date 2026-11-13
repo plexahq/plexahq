@@ -1,0 +1,42 @@
+{
+  "name": "@plexahq/mcp",
+  "version": "0.1.0",
+  "description": "Plexa: an MCP gateway that connects AI assistants to LayerZero Zero and other EVM chains.",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "bin": {
+    "plexa-mcp": "dist/stdio.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev:stdio": "tsx src/stdio.ts",
+    "dev:http": "tsx src/http.ts",
+    "start": "node dist/http.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:live": "PLEXA_LIVE=1 vitest run test/live.test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plexahq/plexahq.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "abitype": "^1.2.3",
+    "viem": "^2.57.19",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
+  }
+}
