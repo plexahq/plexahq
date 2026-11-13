@@ -52,7 +52,17 @@ claude mcp add plexa -- node /absolute/path/to/plexahq/dist/stdio.js
 }
 ```
 
-### Remote (Streamable HTTP)
+### Remote on Vercel
+
+The repo deploys to Vercel as-is: `vercel.json` builds `dist/`, serves the landing page from `public/` and runs `api/mcp.js` and `api/health.js` as functions.
+
+1. In Vercel, **Add New → Project** and import `plexahq/plexahq`. Leave the framework preset as **Other**; the settings come from `vercel.json`.
+2. Optionally add environment variables (see [Configuration](#configuration)).
+3. Deploy. The MCP URL is `https://<project>.vercel.app/mcp`.
+
+Every push to the production branch redeploys automatically.
+
+### Remote on any Node host (Docker, Railway, Fly.io, a VPS)
 
 ```bash
 HOST=0.0.0.0 PORT=3000 npm start
