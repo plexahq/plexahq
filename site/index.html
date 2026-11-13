@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plexa · Every chain, one conversation</title>
+  <meta name="description" content="Plexa is an MCP gateway that connects Claude, ChatGPT, Cursor and VS Code to LayerZero's Zero and every EVM chain. Read, inspect, simulate before you sign, and track cross-chain messages hop by hop.">
+  <meta name="theme-color" content="#0A0B0E">
+  <meta property="og:title" content="Plexa · Every chain, one conversation">
+  <meta property="og:description" content="The MCP gateway for LayerZero's Zero and every EVM chain. Live reads, simulation before signing, cross-chain tracking.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body class="is-loading">
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader-mark">
+      <svg viewBox="0 0 26 26" width="44" height="44"><circle cx="13" cy="13" r="3.4" fill="var(--sig)"/><g stroke="currentColor" stroke-width="1.3" fill="none"><path d="M13 9.6V3M13 16.4V23M9.9 11.2 4.3 8M16.1 14.8 21.7 18M9.9 14.8 4.3 18M16.1 11.2 21.7 8"/></g><g fill="currentColor"><circle cx="13" cy="3" r="1.8"/><circle cx="13" cy="23" r="1.8"/><circle cx="4.3" cy="8" r="1.8"/><circle cx="21.7" cy="18" r="1.8"/><circle cx="4.3" cy="18" r="1.8"/><circle cx="21.7" cy="8" r="1.8"/></g></svg>
+    </div>
+    <div class="loader-row"><span>Establishing signal</span><span class="loader-num" id="loader-num">000</span></div>
+    <div class="loader-bar"><i id="loader-bar"></i></div>
+  </div>
+
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="node-labels" id="node-labels" aria-hidden="true"></div>
+
+  <header class="nav" id="nav">
+    <a class="brand" href="#hero" aria-label="Plexa home">
+      <svg viewBox="0 0 26 26" width="26" height="26" aria-hidden="true"><circle cx="13" cy="13" r="3.4" fill="var(--sig)"/><g stroke="currentColor" stroke-width="1.4" fill="none"><path d="M13 9.6V3M13 16.4V23M9.9 11.2 4.3 8M16.1 14.8 21.7 18M9.9 14.8 4.3 18M16.1 11.2 21.7 8"/></g><g fill="currentColor"><circle cx="13" cy="3" r="1.8"/><circle cx="13" cy="23" r="1.8"/><circle cx="4.3" cy="8" r="1.8"/><circle cx="21.7" cy="18" r="1.8"/><circle cx="4.3" cy="18" r="1.8"/><circle cx="21.7" cy="8" r="1.8"/></g></svg>
+      <span>Plexa</span>
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#read">Product</a>
+      <a href="#crosschain">Live</a>
+      <a href="#tools">Tools</a>
+      <a href="#zero">Zero</a>
+      <a href="#security">Security</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-ghost" href="https://github.com/plexahq/plexahq" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn btn-sig" href="#connect">Connect your AI <span aria-hidden="true">→</span></a>
+    </div>
+  </header>
+
+  <aside class="hud" aria-hidden="true">
+    <span class="hud-num" id="hud-num">00</span>
+    <span class="hud-bar"><i id="hud-bar"></i></span>
+    <span class="hud-name" id="hud-name">Signal</span>
+  </aside>
+  <nav class="rail" id="rail" aria-label="Chapters"></nav>
+
+  <main>
+    <!-- 00 · HERO -->
+    <section class="chapter hero" id="hero" data-chapter="0" data-name="Signal">
+      <div class="wrap">
+        <div class="hero-copy">
+          <p class="eyebrow" data-reveal><span class="dot dot-ok"></span>Live on LayerZero · Zero mainnet Nov 30</p>
+          <h1 class="display" data-split>Every chain.<br>One <em>conversation.</em></h1>
+          <p class="lede" data-reveal>Plexa plugs Claude, ChatGPT, Cursor and VS Code into <b>LayerZero's Zero and every EVM chain</b>. Read wallets, inspect contracts, <b>simulate before you sign</b>, and follow cross-chain messages hop by hop.</p>
+          <div class="urlbox" data-reveal>
+            <code class="js-mcp-url">https://plexahq.vercel.app/mcp</code>
+            <button class="copy-btn" data-copy-mcp type="button">Copy</button>
+          </div>
+          <p class="works" data-reveal>Works with Claude · ChatGPT · Cursor · VS Code · Claude Code</p>
+        </div>
+      </div>
+      <div class="ticker" id="ticker" aria-label="Live LayerZero activity">
+        <span class="ticker-live"><span class="dot dot-ok"></span>Live</span>
+        <div class="ticker-track"><div class="ticker-move" id="ticker-move"><span class="tk">Connecting to the LayerZero network…</span></div></div>
+      </div>
+      <a class="scroll-cue" href="#gap" aria-label="Scroll"><span>Scroll</span><i></i></a>
+    </section>
+
+    <!-- 01 · THE GAP -->
+    <section class="chapter" id="gap" data-chapter="1" data-name="The gap">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="kicker" data-reveal>01 · The gap</p>
+          <h2 class="title" data-split>Your AI speaks every language. <em>Except the chain's.</em></h2>
+          <p class="body" data-reveal>Ask an assistant for a wallet balance and it guesses. Ask what a contract does and it improvises. Ask whether a transaction is safe and it simply can't check. On-chain, a confident guess is the most expensive kind of wrong.</p>
+        </div>
+        <div class="guesses" aria-label="Typical AI guesses">
+          <div class="guess" data-reveal><span class="g-q">"What's in this wallet?"</span><span class="g-a"><s>Probably around 2 ETH.</s></span><span class="g-x">unverified</span></div>
+          <div class="guess" data-reveal><span class="g-q">"Is this approval safe?"</span><span class="g-a"><s>Looks like a standard approval.</s></span><span class="g-x">unchecked</span></div>
+          <div class="guess" data-reveal><span class="g-q">"Where is my bridge transfer?"</span><span class="g-a"><s>Bridges usually take 10–20 minutes.</s></span><span class="g-x">made up</span></div>
+          <p class="guess-foot" data-reveal>Plexa replaces every one of these with a live answer from the chain itself.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 · CONNECT -->
+    <section class="chapter" id="connect" data-chapter="2" data-name="Connect">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="kicker" data-reveal>02 · Connect</p>
+          <h2 class="title" data-split>One URL. <em>Every AI</em> you already use.</h2>
+          <p class="body" data-reveal>Plexa speaks the Model Context Protocol, the open standard AI assistants use to reach tools. Add one URL and your assistant gains twelve on-chain tools. No SDK, no API key, no wallet connection.</p>
+          <div class="urlbox" data-reveal>
+            <code class="js-mcp-url">https://plexahq.vercel.app/mcp</code>
+            <button class="copy-btn" data-copy-mcp type="button">Copy</button>
+          </div>
+        </div>
+        <div class="panel tabs" data-reveal>
+          <div class="tab-list" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="claude">Claude</button>
+            <button role="tab" aria-selected="false" data-tab="claude-code">Claude Code</button>
+            <button role="tab" aria-selected="false" data-tab="chatgpt">ChatGPT</button>
+            <button role="tab" aria-selected="false" data-tab="cursor">Cursor</button>
+            <button role="tab" aria-selected="false" data-tab="vscode">VS Code</button>
+          </div>
+          <div class="tab-panel" data-panel="claude">
+            <ol class="steps"><li>Open <b>Settings → Connectors</b> on claude.ai or in the Claude app.</li><li>Choose <b>Add custom connector</b>.</li><li>Paste the URL and save. Ask: <i>"What's in wallet 0xd8dA…6045 on Base?"</i></li></ol>
+            <pre class="code"><code class="js-mcp-url">https://plexahq.vercel.app/mcp</code><button class="copy-btn sm" data-copy-mcp type="button">Copy</button></pre>
+          </div>
+          <div class="tab-panel" data-panel="claude-code" hidden>
+            <ol class="steps"><li>Run this once in your terminal.</li><li>Start Claude Code and ask about any chain.</li></ol>
+            <pre class="code"><code data-template="claude mcp add --transport http plexa {url}">claude mcp add --transport http plexa https://plexahq.vercel.app/mcp</code><button class="copy-btn sm" data-copy-code type="button">Copy</button></pre>
+          </div>
+          <div class="tab-panel" data-panel="chatgpt" hidden>
+            <ol class="steps"><li>Open ChatGPT's settings and add a custom MCP connector.</li><li>Paste the URL. No authentication is needed.</li><li>Enable it in a chat and ask about any wallet or transaction.</li></ol>
+            <pre class="code"><code class="js-mcp-url">https://plexahq.vercel.app/mcp</code><button class="copy-btn sm" data-copy-mcp type="button">Copy</button></pre>
+          </div>
+          <div class="tab-panel" data-panel="cursor" hidden>
+            <ol class="steps"><li>Add this to <b>~/.cursor/mcp.json</b>.</li><li>Reload Cursor. Plexa's tools appear in Agent mode.</li></ol>
+            <pre class="code"><code data-template='{ "mcpServers": { "plexa": { "url": "{url}" } } }'>{ "mcpServers": { "plexa": { "url": "https://plexahq.vercel.app/mcp" } } }</code><button class="copy-btn sm" data-copy-code type="button">Copy</button></pre>
+          </div>
+          <div class="tab-panel" data-panel="vscode" hidden>
+            <ol class="steps"><li>Add this to <b>.vscode/mcp.json</b> in your workspace.</li><li>Start the server from the MCP view and use it in Copilot Chat's agent mode.</li></ol>
+            <pre class="code"><code data-template='{ "servers": { "plexa": { "type": "http", "url": "{url}" } } }'>{ "servers": { "plexa": { "type": "http", "url": "https://plexahq.vercel.app/mcp" } } }</code><button class="copy-btn sm" data-copy-code type="button">Copy</button></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 · READ -->
+    <section class="chapter" id="read" data-chapter="3" data-name="Read">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="kicker" data-reveal>03 · Read</p>
+          <h2 class="title" data-split>Ask anything. <em>Answered from the chain.</em></h2>
+          <p class="body" data-reveal>Balances, tokens, blocks, transactions, contract state and verified source code, read live the moment you ask. Proxies are followed to their implementation. EIP-7702 smart wallets are recognised for what they are.</p>
+          <p class="note" data-reveal>Try it. This panel calls the same tools your AI does.</p>
+        </div>
+        <div class="panel demo" id="demo-read" data-reveal>
+          <div class="demo-head"><span class="demo-title">Live tool call</span><span class="demo-tabs"><button class="on" data-read-mode="wallet" type="button">Wallet</button><button data-read-mode="contract" type="button">Contract</button></span></div>
+          <form class="demo-form" id="read-form" autocomplete="off">
+            <select id="read-chain" aria-label="Chain"><option value="base">Base</option><option value="ethereum">Ethereum</option><option value="arbitrum">Arbitrum</option><option value="hyperevm">HyperEVM</option></select>
+            <input id="read-address" aria-label="Address" spellcheck="false" value="0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045">
+            <button class="btn btn-sig" type="submit">Run</button>
+          </form>
+          <div class="presets" id="read-presets"></div>
+          <div class="call-line" id="read-call"></div>
+          <div class="result" id="read-result"><div class="result-empty">Press <b>Run</b> to query the chain live.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 · SIMULATE -->
+    <section class="chapter" id="simulate" data-chapter="4" data-name="Simulate">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="kicker" data-reveal>04 · Simulate</p>
+          <h2 class="title" data-split>See it <em>before</em> you sign it.</h2>
+          <p class="body" data-reveal>Every transaction is dry-run against live chain state first. Your assistant tells you, in plain words, whether it would succeed, what it costs, and what it really does, including the traps people sign every day.</p>
+          <div class="scenarios" id="scenarios" role="group" aria-label="Scenarios">
+            <button class="scenario on" data-scenario="approve" type="button"><span class="sc-n">A</span><span><b>Unlimited approval to a stranger</b><small>The classic wallet drainer</small></span></button>
+            <button class="scenario" data-scenario="send" type="button"><span class="sc-n">B</span><span><b>Send 0.01 ETH to a friend</b><small>A normal transfer</small></span></button>
+            <button class="scenario" data-scenario="overdraw" type="button"><span class="sc-n">C</span><span><b>Transfer more than you hold</b><small>Caught before it costs gas</small></span></button>
+          </div>
+        </div>
+        <div class="console" id="console" data-reveal>
+          <div class="console-head"><span>claude · plexa connected</span><span class="console-live"><span class="dot dot-ok"></span>live</span></div>
+          <div class="console-body" id="console-body" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 · CROSS-CHAIN -->
+    <section class="chapter" id="crosschain" data-chapter="5" data-name="Cross-chain">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="kicker" data-reveal>05 · Cross-chain</p>
+          <h2 class="title" data-split>Follow every message, <em>hop by hop.</em></h2>
+          <p class="body" data-reveal>LayerZero moves billions between chains as messages verified by independent DVNs. Plexa reads LayerZero Scan and the official deployment registry, names every verifier, and explains a stuck transfer in one sentence.</p>
+          <form class="track" id="track-form" autocomplete="off" data-reveal>
+            <input id="track-input" spellcheck="false" placeholder="Paste a source transaction hash (0x…)" aria-label="Transaction hash">
+            <button class="btn btn-sig" type="submit">Track</button>
+          </form>
+          <div class="timeline" id="timeline"></div>
+        </div>
+        <div class="panel feed" data-reveal>
+          <div class="demo-head"><span class="demo-title"><span class="dot dot-ok"></span> LayerZero, right now</span><span class="feed-meta" id="feed-meta">…</span></div>
+          <div class="feed-list" id="feed-list"></div>
+          <div class="blocks" id="blocks"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 · ZERO -->
+    <section class="chapter zero" id="zero" data-chapter="6" data-name="Zero">
+      <div class="wrap center">
+        <p class="kicker" data-reveal>06 · Zero</p>
+        <h2 class="title big" data-split>Zero is coming. <em>Your AI is ready.</em></h2>
+        <p class="body center-body" data-reveal>LayerZero's own registry already lists Zero's zones. Plexa is wired for them today: the moment public RPCs go live, one line of configuration switches them on.</p>
+        <div class="countdown" id="countdown" data-reveal>
+          <div><b id="cd-d">--</b><small>Days</small></div><div><b id="cd-h">--</b><small>Hours</small></div><div><b id="cd-m">--</b><small>Minutes</small></div><div><b id="cd-s" class="sig">--</b><small>Seconds</small></div>
+        </div>
+        <p class="cd-note" data-reveal>Until Zero mainnet · Nov 30, 2026 (UTC)</p>
+        <div class="zones">
+          <div class="zone" data-reveal><span class="zone-k">Zone</span><b>ATLAS</b><p>The trading zone behind lzATLAS. Matching, clearing and settlement for dozens of venues.</p><span class="pill pill-sig">RPC pending · auto-enabled</span></div>
+          <div class="zone" data-reveal><span class="zone-k">Zone</span><b>Interop</b><p>General-purpose EVM. Solidity contracts, Zero-native apps and cross-chain messaging.</p><span class="pill pill-sig">RPC pending · auto-enabled</span></div>
+          <div class="zone" data-reveal><span class="zone-k">Zone</span><b>Payments</b><p>Privacy-focused payment rails for institutions, announced alongside Zero.</p><span class="pill">Announced</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 · SECURITY -->
+    <section class="chapter" id="security" data-chapter="7" data-name="Security">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="kicker" data-reveal>07 · Security</p>
+          <h2 class="title" data-split>Read-only <em>by design.</em></h2>
+          <p class="body" data-reveal>Plexa can look at everything and touch nothing. It never asks for a key, never holds funds and never broadcasts a transaction. When signing arrives, it happens in your own wallet, after a simulation you can read.</p>
+        </div>
+        <div class="visual-space" aria-hidden="true"></div>
+      </div>
+      <div class="wrap">
+        <div class="principles">
+          <div class="pr" data-reveal><span class="pr-i">01</span><b>No keys, ever</b><p>There is nothing to steal. Plexa has no wallet and wants none of yours.</p></div>
+          <div class="pr" data-reveal><span class="pr-i">02</span><b>Simulation before signature</b><p>Every transaction is dry-run on live state and explained before you decide.</p></div>
+          <div class="pr" data-reveal><span class="pr-i">03</span><b>Drainer patterns flagged</b><p>Unlimited approvals, approvals to plain wallets, tokens sent to their own contract.</p></div>
+          <div class="pr" data-reveal><span class="pr-i">04</span><b>Verified sources</b><p>Contract code comes from Sourcify. Unverified contracts are called out, not trusted.</p></div>
+          <div class="pr" data-reveal><span class="pr-i">05</span><b>EIP-7702 aware</b><p>Delegated smart wallets are recognised, and unverified delegates are flagged.</p></div>
+          <div class="pr" data-reveal><span class="pr-i">06</span><b>Open by default</b><p>The code is public on GitHub. Read exactly what your AI is running.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 08 · TOOLS -->
+    <section class="chapter" id="tools" data-chapter="8" data-name="Tools">
+      <div class="wrap">
+        <div class="copy wide">
+          <p class="kicker" data-reveal>08 · Tools</p>
+          <h2 class="title" data-split>Twelve tools. <em>Zero guesswork.</em></h2>
+        </div>
+        <div class="tool-grid" id="tool-grid"></div>
+      </div>
+    </section>
+
+    <!-- 09 · ROADMAP -->
+    <section class="chapter" id="roadmap" data-chapter="9" data-name="Roadmap">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="kicker" data-reveal>09 · Roadmap</p>
+          <h2 class="title" data-split>Reading is <em>step one.</em></h2>
+          <p class="body" data-reveal>Every new network gets the same tools, the same safety rules and the same single URL.</p>
+        <ol class="road">
+          <li data-reveal><span class="pill pill-ok">Live</span><b>Read · Inspect · Simulate · Track</b><p>Twelve read-only tools across Ethereum, Base, Arbitrum and HyperEVM, plus LayerZero's whole network.</p></li>
+          <li data-reveal><span class="pill pill-sig">Nov 30</span><b>Zero mainnet</b><p>ATLAS and Interop zones switched on the day LayerZero publishes RPCs.</p></li>
+          <li data-reveal><span class="pill">Next</span><b>Signing page</b><p>Your AI prepares the transaction, you review the simulation and sign in your own wallet.</p></li>
+          <li data-reveal><span class="pill">Next</span><b>OFT bridging &amp; OApp security review</b><p>Quote and build cross-chain sends; explain an app's DVN and executor setup per pathway.</p></li>
+          <li data-reveal><span class="pill">Later</span><b>Agent wallets with limits</b><p>Session keys with spend caps, allowed contracts and expiry, for agents that act on their own.</p></li>
+        </ol>
+        </div>
+        <div class="visual-space" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- 10 · FAQ -->
+    <section class="chapter" id="faq" data-chapter="10" data-name="FAQ">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="kicker" data-reveal>10 · Questions</p>
+          <h2 class="title" data-split>Asked <em>and answered.</em></h2>
+        </div>
+        <div class="faq" id="faq-list">
+          <details data-reveal><summary>What is MCP?</summary><p>The Model Context Protocol is an open standard that lets AI assistants call external tools. Claude, ChatGPT, Cursor and VS Code all support it. Plexa is an MCP server: you add its URL and your assistant can use its tools.</p></details>
+          <details data-reveal><summary>Does Plexa hold my keys or funds?</summary><p>No. Plexa is read-only. It never asks for a private key, never holds assets and never sends a transaction. Future signing will always happen in your own wallet.</p></details>
+          <details data-reveal><summary>Which chains are supported?</summary><p>Ethereum, Base, Arbitrum and HyperEVM today, plus their Sepolia testnets, and the entire LayerZero network for message tracking. Zero's ATLAS and Interop zones switch on at mainnet.</p></details>
+          <details data-reveal><summary>What is Zero?</summary><p>Zero is LayerZero's new blockchain, built from specialised zones for trading, interoperability and payments. Mainnet is scheduled for November 30, 2026.</p></details>
+          <details data-reveal><summary>Is it free?</summary><p>Yes, during launch. Add the URL and start asking.</p></details>
+          <details data-reveal><summary>How does simulation work?</summary><p>Plexa runs your transaction against the chain's live state without broadcasting it, decodes the call using verified contract code, estimates the fee and flags known drainer patterns.</p></details>
+          <details data-reveal><summary>Is Plexa affiliated with LayerZero?</summary><p>No. Plexa is an independent project that builds on LayerZero's public infrastructure and APIs.</p></details>
+          <details data-reveal><summary>Is the code open?</summary><p>Yes. The full server is on GitHub, so you can see exactly what runs when your AI calls a tool.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 · FINAL -->
+    <section class="chapter final" id="final" data-chapter="11" data-name="Begin">
+      <div class="wrap center">
+        <h2 class="display final-title" data-split>Give your AI <em>a pulse.</em></h2>
+        <p class="body center-body" data-reveal>One URL. Every chain. Nothing to sign until you say so.</p>
+        <div class="urlbox big" data-reveal>
+          <code class="js-mcp-url">https://plexahq.vercel.app/mcp</code>
+          <button class="copy-btn" data-copy-mcp type="button">Copy</button>
+        </div>
+        <div class="final-cta" data-reveal>
+          <a class="btn btn-sig" href="#connect">Connect your AI <span aria-hidden="true">→</span></a>
+          <a class="btn btn-ghost" href="https://github.com/plexahq/plexahq" target="_blank" rel="noopener">Read the code</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap foot">
+      <div class="foot-brand">
+        <span class="brand"><svg viewBox="0 0 26 26" width="22" height="22" aria-hidden="true"><circle cx="13" cy="13" r="3.4" fill="var(--sig)"/><g stroke="currentColor" stroke-width="1.4" fill="none"><path d="M13 9.6V3M13 16.4V23M9.9 11.2 4.3 8M16.1 14.8 21.7 18M9.9 14.8 4.3 18M16.1 11.2 21.7 8"/></g></svg><span>Plexa</span></span>
+        <p>The MCP gateway for LayerZero's Zero and every EVM chain.</p>
+      </div>
+      <div class="foot-cols">
+        <div><h4>Product</h4><a href="#read">Read</a><a href="#simulate">Simulate</a><a href="#crosschain">Cross-chain</a><a href="#tools">Tools</a></div>
+        <div><h4>Developers</h4><a href="https://github.com/plexahq/plexahq" target="_blank" rel="noopener">GitHub</a><a href="https://github.com/plexahq/plexahq#readme" target="_blank" rel="noopener">Docs</a><a href="/health">Status</a></div>
+        <div><h4>Network</h4><a href="#zero">Zero</a><a href="https://layerzeroscan.com" target="_blank" rel="noopener">LayerZero Scan</a><a href="#security">Security</a></div>
+      </div>
+    </div>
+    <div class="wrap foot-base"><span>© 2026 Plexa</span><span>Independent project. Not affiliated with LayerZero Labs.</span></div>
+  </footer>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

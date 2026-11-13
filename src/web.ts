@@ -1,5 +1,6 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { ChainRegistry, loadChains } from "./chains.js";
+import { getLiveSnapshot } from "./live.js";
 import { createServer, VERSION } from "./server.js";
 
 /**
@@ -43,6 +44,22 @@ function withCors(res: Response): Response {
 
 export function handleHealth(): Response {
   return json(200, { ok: true, name: "plexa", version: VERSION });
+}
+
+/**
+ * GET /api/live: latest LayerZero messages and block heights for the website.
+ * Cached at the CDN for a few seconds so traffic never multiplies upstream RPC calls.
+ */
+export async function handleLive(): Promise<Response> {
+  const snapshot = await getLiveSnapshot(getRegistry());
+  return new Response(JSON.stringify(snapshot), {
+    status: 200,
+    headers: {
+      "content-type": "application/json",
+      "cache-control": "public, max-age=5, s-maxage=10, stale-while-revalidate=50",
+      ...CORS_HEADERS,
+    },
+  });
 }
 
 export async function handleMcpRequest(request: Request): Promise<Response> {

@@ -11,7 +11,7 @@ const INSTRUCTIONS = `Plexa connects you to LayerZero's Zero chain and other EVM
 - Call list_chains to see which chains are available and which have an RPC configured.
 - Before suggesting that a user sign any transaction, call simulate_transaction and relay its explanation and warnings in plain language.
 - Use get_contract_info to explain what an unknown contract is before interacting with it.
-- For bridging and cross-chain questions, use lz_track_message (by source tx hash), lz_list_messages and lz_chain_info.
+- For bridging and cross-chain questions, use lz_track_message (by source tx hash), lz_list_messages, lz_latest_messages and lz_chain_info.
 - Report token amounts in human units with their symbol, and link explorer / LayerZero Scan URLs when available.`;
 
 export function createServer(registry: ChainRegistry = new ChainRegistry(loadChains())): McpServer {

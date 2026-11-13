@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getAddress } from "viem";
 import { z } from "zod";
 import type { ChainRegistry } from "../chains.js";
-import { findChains, getMetadata, scanGet, summarizeChain, summarizeMessage, type LzNetwork } from "../layerzero.js";
+import { compactMessage, findChains, getMetadata, scanGet, summarizeChain, summarizeMessage, type LzNetwork } from "../layerzero.js";
 import { safe } from "../result.js";
 
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, openWorldHint: true } as const;
@@ -82,6 +82,26 @@ export function registerLayerZeroTools(server: McpServer, registry: ChainRegistr
   );
 
   server.registerTool(
+    "lz_latest_messages",
+    {
+      title: "Latest LayerZero messages",
+      description:
+        "Shows the most recent cross-chain messages across the whole LayerZero network: which apps are sending, between which chains, and whether they were delivered. Useful for 'what is happening on LayerZero right now?'.",
+      inputSchema: {
+        limit: z.number().int().min(1).max(50).optional().describe("Max messages to return (default 10)"),
+        network,
+      },
+      annotations: READ_ONLY,
+    },
+    safe(async ({ limit, network: net }) => {
+      const n: LzNetwork = net ?? "mainnet";
+      const max = limit ?? 10;
+      const { data } = await scanGet(n, `/messages/latest?limit=${max}`);
+      return { count: data.length, messages: data.slice(0, max).map((m) => compactMessage(m, n)) };
+    }),
+  );
+
+  server.registerTool(
     "lz_list_messages",
     {
       title: "List LayerZero messages",
@@ -106,22 +126,7 @@ export function registerLayerZeroTools(server: McpServer, registry: ChainRegistr
       const max = limit ?? 10;
       const path = oappEid ? `/messages/oapp/${oappEid}/${addr}?limit=${max}` : `/messages/wallet/${addr}?limit=${max}`;
       const { data } = await scanGet(n, path);
-      return {
-        count: data.length,
-        messages: data.slice(0, max).map((m) => {
-          const s = summarizeMessage(m, n);
-          return {
-            status: s.status,
-            route: `${s.from.chain ?? s.from.eid} -> ${s.to.chain ?? s.to.eid}`,
-            app: s.from.app,
-            sentAt: s.from.sentAt,
-            deliverySeconds: s.deliverySeconds,
-            sourceTx: s.from.txHash,
-            destinationTx: s.to.txHash,
-            scanUrl: s.scanUrl,
-          };
-        }),
-      };
+      return { count: data.length, messages: data.slice(0, max).map((m) => compactMessage(m, n)) };
     }),
   );
 }

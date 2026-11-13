@@ -201,6 +201,26 @@ function iso(ts?: number): string | undefined {
   return ts ? new Date(ts * 1000).toISOString() : undefined;
 }
 
+/** One-line view of a message, for lists and live feeds. */
+export function compactMessage(m: ScanMessage, network: LzNetwork) {
+  const s = summarizeMessage(m, network);
+  const required = s.verification.dvns.filter((d) => !d.optional);
+  return {
+    status: s.status,
+    route: `${s.from.chain ?? s.from.eid} -> ${s.to.chain ?? s.to.eid}`,
+    from: s.from.chain ?? String(s.from.eid),
+    to: s.to.chain ?? String(s.to.eid),
+    app: s.from.app,
+    sentAt: s.from.sentAt,
+    deliverySeconds: s.deliverySeconds,
+    dvnsVerified: required.filter((d) => d.status === "SUCCEEDED").length,
+    dvnsRequired: required.length,
+    sourceTx: s.from.txHash,
+    destinationTx: s.to.txHash,
+    scanUrl: s.scanUrl,
+  };
+}
+
 /** Turns a raw Scan message into a compact, explainable summary. */
 export function summarizeMessage(m: ScanMessage, network: LzNetwork) {
   const statusName = m.status?.name ?? "UNKNOWN";

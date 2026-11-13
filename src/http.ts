@@ -1,7 +1,7 @@
 import { createServer as createHttpServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { Readable } from "node:stream";
 import { VERSION } from "./server.js";
-import { CORS_HEADERS, handleHealth, handleMcpRequest } from "./web.js";
+import { CORS_HEADERS, handleHealth, handleLive, handleMcpRequest } from "./web.js";
 
 /**
  * Standalone Node HTTP server (for Docker, Railway, Fly.io, a VPS or local use).
@@ -40,6 +40,7 @@ const httpServer = createHttpServer(async (req, res) => {
     const { pathname } = new URL(req.url ?? "/", "http://localhost");
     let response: Response;
     if (pathname === "/health") response = handleHealth();
+    else if (pathname === "/api/live") response = await handleLive();
     else if (pathname === "/mcp") response = await handleMcpRequest(toRequest(req));
     else {
       response = new Response(JSON.stringify({ error: "Not found. The MCP endpoint is /mcp" }), {

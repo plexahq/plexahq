@@ -21,6 +21,7 @@ Ask your assistant things like *"what's in this wallet?"*, *"what does this cont
 | `lz_chain_info` | LayerZero deployment registry lookup: EID, EndpointV2, libraries, executor, active DVNs |
 | `lz_track_message` | Tracks a cross-chain message by source tx hash, names the DVNs and explains stuck states |
 | `lz_list_messages` | Recent LayerZero messages for a wallet or an OApp |
+| `lz_latest_messages` | What is moving across the whole LayerZero network right now |
 
 Built-in chains: Zero (ATLAS and Interop zones, placeholders until launch), Ethereum, Arbitrum, Base, HyperEVM, and the Sepolia testnets of Ethereum, Arbitrum and Base.
 
@@ -54,7 +55,7 @@ claude mcp add plexa -- node /absolute/path/to/plexahq/dist/stdio.js
 
 ### Remote on Vercel
 
-The repo deploys to Vercel as-is: `vercel.json` builds `dist/`, serves the landing page from `public/` and runs `api/mcp.js` and `api/health.js` as functions.
+The repo deploys to Vercel as-is: `vercel.json` builds the server into `dist/` and the website into `site-dist/`, and runs `api/mcp.js`, `api/health.js` and `api/live.js` as functions.
 
 1. In Vercel, **Add New → Project** and import `plexahq/plexahq`. Leave the framework preset as **Other**; the settings come from `vercel.json`.
 2. Optionally add environment variables (see [Configuration](#configuration)).
@@ -97,6 +98,15 @@ npm start
 ```
 
 LayerZero's metadata API already lists the zones as `zeroatlas` and `zerointerop` (EVM, gas token ZRO). The testnet entries there use chain ID 1337 and contract addresses that match local Hardhat/Anvil defaults, so they look like internal devnets rather than public testnets; Plexa does not hard-code them.
+
+## Website
+
+The marketing site lives in `site/` (Vite + Three.js + GSAP + Lenis). It is powered by Plexa itself: the live demos call `/mcp`, and the live feed reads `GET /api/live` (latest LayerZero messages and block heights, cached at the CDN for 10 seconds).
+
+```bash
+npm run dev:http   # API on :3000
+npm run dev:site   # site on :5173, proxies /mcp and /api to :3000
+```
 
 ## Development
 

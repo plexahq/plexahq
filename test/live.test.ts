@@ -80,6 +80,12 @@ describe.skipIf(!LIVE)("live tools", { timeout: 60_000 }, () => {
     expect(JSON.stringify(r)).toMatch(/zeroatlas/);
   });
 
+  it("lists the latest LayerZero messages", async () => {
+    const r = await call("lz_latest_messages", { limit: 3 });
+    expect(r.count).toBeGreaterThan(0);
+    expect(r.messages[0].route).toContain("->");
+  });
+
   it("tracks the latest LayerZero message", async () => {
     const latest = (await fetch("https://scan.layerzero-api.com/v1/messages/latest?limit=1").then((x) => x.json())) as {
       data: { source: { tx: { txHash: string } } }[];

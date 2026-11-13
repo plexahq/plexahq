@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { findChains, summarizeChain, summarizeMessage, type LzMetadata, type ScanMessage } from "../src/layerzero.js";
+import {
+  compactMessage,
+  findChains,
+  summarizeChain,
+  summarizeMessage,
+  type LzMetadata,
+  type ScanMessage,
+} from "../src/layerzero.js";
 
 const metadata: LzMetadata = {
   "base-mainnet": {
@@ -79,6 +86,13 @@ describe("summarizeMessage", () => {
     expect(s.verification.waitingOn).toEqual(["Canary"]);
     expect(s.compose).toBeUndefined();
     expect(s.scanUrl).toBe("https://layerzeroscan.com/tx/0xabc");
+  });
+
+  it("compacts a message for live feeds", () => {
+    const c = compactMessage(inflight, "mainnet");
+    expect(c).toMatchObject({ status: "INFLIGHT", from: "ethereum", to: "base", app: "Stargate" });
+    expect(c.dvnsVerified).toBe(1);
+    expect(c.dvnsRequired).toBe(2);
   });
 
   it("computes delivery time and uses the testnet scan URL", () => {
