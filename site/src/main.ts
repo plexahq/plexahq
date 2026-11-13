@@ -1,7 +1,8 @@
 import "./styles.css";
 import { initConnect, initCountdown, initRead, initSimulate, initTools, initTrack } from "./demos";
-import { bindFeed, bindTicker, LiveFeed, ZERO_AT_DEFAULT } from "./live";
+import { bindFeed, LiveFeed, ZERO_AT_DEFAULT } from "./live";
 import { initMotion, revealHero, whenVisible } from "./motion";
+import { initNav } from "./nav";
 import type { Plexus } from "./scene/plexus";
 
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -9,6 +10,7 @@ const narrow = innerWidth < 900;
 const $ = (id: string) => document.getElementById(id)!;
 
 // Content first: everything works without WebGL.
+initNav();
 initConnect();
 initTools();
 const read = initRead();
@@ -19,7 +21,6 @@ let plexus: Plexus | null = null;
 const chapters = initMotion(reduced, (v) => plexus?.setVelocity(v));
 
 const feed = new LiveFeed();
-bindTicker(feed, $("ticker-move"));
 let autoTracked = false;
 bindFeed(feed, $("feed-list"), $("blocks"), $("feed-meta"), (tx) => void track.track(tx));
 initCountdown(() => feed.last?.zero.mainnetAt ?? ZERO_AT_DEFAULT);
@@ -71,10 +72,10 @@ function finish() {
   target = 60;
   try {
     const { createPlexus } = await import("./scene/plexus");
-    plexus = createPlexus($("gl") as HTMLCanvasElement, { count: narrow ? 2800 : 7200, reduced, labels: $("node-labels") });
+    plexus = createPlexus($("gl") as HTMLCanvasElement, { count: narrow ? 3200 : 9000, reduced, labels: $("node-labels") });
     if (plexus) {
       plexus.start();
-      chapters.onChange((i) => plexus!.setChapter(i));
+      chapters.onTransition((a, c, t) => plexus!.setTransition(a, c, t));
       // pulses: every fresh message, plus a slow replay so the network never sleeps
       feed.on((s, fresh) => fresh.slice(0, 8).forEach((m, k) => setTimeout(() => plexus?.pulse(m.from, m.to, m.status === "DELIVERED"), k * 420)));
       setInterval(() => {

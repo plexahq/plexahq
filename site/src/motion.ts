@@ -52,6 +52,7 @@ export function scramble(el: HTMLElement, duration = 900) {
 
 export interface Chapters {
   onChange(fn: (i: number, name: string) => void): void;
+  onTransition(fn: (a: number, c: number, t: number) => void): void;
   scrollTo(target: string | HTMLElement): void;
   lenis: Lenis | null;
 }
@@ -107,63 +108,87 @@ export function initMotion(reduced: boolean, onVelocity: (v: number) => void): C
   };
   window.addEventListener("scroll", onScroll, { passive: true });
 
-  // chapters: HUD, rail, listeners
-  const sections = [...document.querySelectorAll<HTMLElement>("[data-chapter]")];
-  const rail = document.getElementById("rail")!;
-  const hudNum = document.getElementById("hud-num")!;
-  const hudName = document.getElementById("hud-name")!;
-  const hudBar = document.getElementById("hud-bar")!;
-  const listeners: ((i: number, name: string) => void)[] = [];
-  let active = -1;
-
-  rail.innerHTML = sections.map((s, i) => `<button type="button" aria-label="${s.dataset.name}" data-go="${i}"><i></i></button>`).join("");
-  const dots = [...rail.querySelectorAll("button")];
   const scrollTo = (target: string | HTMLElement) => {
     const el = typeof target === "string" ? document.querySelector<HTMLElement>(target) : target;
     if (!el) return;
     if (lenis) lenis.scrollTo(el, { offset: 0, duration: 1.6 });
     else el.scrollIntoView();
   };
-  dots.forEach((d, i) => d.addEventListener("click", () => scrollTo(sections[i]!)));
-  document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) =>
+  // in-page links (#x, and /#x while on the home page) glide instead of jumping
+  const onHome = location.pathname === "/" || location.pathname.endsWith("/index.html");
+  document.querySelectorAll<HTMLAnchorElement>('a[href^="#"], a[href^="/#"]').forEach((a) =>
     a.addEventListener("click", (e) => {
-      const id = a.getAttribute("href")!;
-      if (id.length < 2) return;
+      const href = a.getAttribute("href")!;
+      const id = href.startsWith("/#") ? (onHome ? href.slice(1) : "") : href;
+      if (id.length < 2 || !document.querySelector(id)) return;
       e.preventDefault();
+      document.dispatchEvent(new CustomEvent("plexa:navigate"));
       scrollTo(id);
     }),
   );
 
-  const setActive = (i: number) => {
-    if (i === active) return;
-    active = i;
-    const s = sections[i]!;
-    const name = s.dataset.name ?? "";
-    hudNum.textContent = String(i).padStart(2, "0");
-    hudName.textContent = name;
-    dots.forEach((d, k) => d.classList.toggle("on", k === i));
-    document.body.classList.toggle("hero-active", i === 0);
-    for (const fn of listeners) fn(i, name);
-  };
-  sections.forEach((s, i) =>
-    ScrollTrigger.create({
-      trigger: s,
-      start: "top 55%",
-      end: "bottom 55%",
-      onToggle: (self) => self.isActive && setActive(i),
-    }),
-  );
-  ScrollTrigger.create({
-    start: 0,
-    end: "max",
-    onUpdate: (self) => gsap.set(hudBar, { scaleX: self.progress }),
-  });
-  setActive(0);
+  // chapters (home page only): HUD, rail, scroll-scrubbed scene transitions
+  const sections = [...document.querySelectorAll<HTMLElement>("[data-chapter]")];
+  const listeners: ((i: number, name: string) => void)[] = [];
+  const tListeners: ((a: number, c: number, t: number) => void)[] = [];
+  let lastT: [number, number, number] = [0, 1, 0];
+  let active = -1;
+  const rail = document.getElementById("rail");
+  if (sections.length && rail) {
+    const hudNum = document.getElementById("hud-num")!;
+    const hudName = document.getElementById("hud-name")!;
+    const hudBar = document.getElementById("hud-bar")!;
+    rail.innerHTML = sections.map((s, i) => `<button type="button" aria-label="${s.dataset.name}" data-go="${i}"><i></i></button>`).join("");
+    const dots = [...rail.querySelectorAll("button")];
+    dots.forEach((d, i) => d.addEventListener("click", () => scrollTo(sections[i]!)));
+    const setActive = (i: number) => {
+      if (i === active) return;
+      active = i;
+      const name = sections[i]!.dataset.name ?? "";
+      hudNum.textContent = String(i).padStart(2, "0");
+      hudName.textContent = name;
+      dots.forEach((d, k) => d.classList.toggle("on", k === i));
+      document.body.classList.toggle("hero-active", i === 0);
+      for (const fn of listeners) fn(i, name);
+    };
+    sections.forEach((s, i) =>
+      ScrollTrigger.create({ trigger: s, start: "top 55%", end: "bottom 55%", onToggle: (self) => self.isActive && setActive(i) }),
+    );
+    // As section k rises from the bottom of the screen to near the top, the scene travels
+    // from formation k-1, through the full-screen storm, into formation k.
+    const emitT = (a: number, c: number, t: number) => {
+      lastT = [a, c, t];
+      for (const fn of tListeners) fn(a, c, t);
+    };
+    sections.forEach((s, k) => {
+      if (k === 0) return;
+      ScrollTrigger.create({
+        trigger: s,
+        start: "top bottom",
+        end: "top 22%",
+        onUpdate: (self) => emitT(k - 1, k, self.progress),
+        onLeave: () => emitT(k - 1, k, 1),
+        onLeaveBack: () => emitT(k - 1, k, 0),
+      });
+    });
+    let state: [number, number, number] = [0, 1, 0];
+    sections.forEach((s, k) => {
+      const top = s.getBoundingClientRect().top;
+      if (k > 0 && top < innerHeight) state = [k - 1, k, Math.min(1, (innerHeight - top) / (innerHeight * 0.78))];
+    });
+    emitT(...state);
+    ScrollTrigger.create({ start: 0, end: "max", onUpdate: (self) => gsap.set(hudBar, { scaleX: self.progress }) });
+    setActive(0);
+  }
 
   return {
+    onTransition(fn) {
+      tListeners.push(fn);
+      fn(...lastT);
+    },
     onChange(fn) {
       listeners.push(fn);
-      if (active >= 0) fn(active, sections[active]!.dataset.name ?? "");
+      if (active >= 0) fn(active, sections[active]?.dataset.name ?? "");
     },
     scrollTo,
     lenis,
@@ -178,8 +203,7 @@ export function revealHero(reduced: boolean) {
   const tl = gsap.timeline({ delay: 0.15 });
   tl.to(words, { y: 0, duration: 1.4, ease: "expo.out", stagger: 0.07 })
     .to(items, { opacity: 1, y: 0, duration: 1.2, ease: "expo.out", stagger: 0.1 }, "-=1.0")
-    .from("#ticker", { yPercent: 100, duration: 1.2, ease: "expo.out" }, "-=1.1")
-    .from(".nav", { yPercent: -100, duration: 1, ease: "expo.out" }, "-=1.2");
+    .fromTo(".nav", { yPercent: -100 }, { yPercent: 0, y: 0, duration: 1, ease: "expo.out", clearProps: "transform" }, "-=1.2");
 }
 
 /** Fire `fn` once when `el` first scrolls into view. */

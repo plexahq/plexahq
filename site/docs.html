@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Documentation · Plexa</title>
+  <meta name="description" content="Plexa documentation: quickstart for Claude, Claude Code, ChatGPT, Cursor and VS Code, the full tool reference, networks, LayerZero tracking, safety model, self-hosting and HTTP endpoints.">
+  <meta name="theme-color" content="#0A0B0E">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body class="page" data-page="docs" data-scene="8">
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="node-labels" id="node-labels" aria-hidden="true"></div>
+  <!--#include nav-->
+
+  <main class="docs">
+    <div class="docs-bar"><div class="wrap"><span>Docs</span><span>/</span><span id="crumb">Overview</span></div></div>
+    <div class="wrap docs-layout">
+      <aside class="docs-side" aria-label="Documentation">
+        <p class="side-h">01 · Getting started</p>
+        <a href="#overview">Overview</a><a href="#quickstart">Quickstart</a><a href="#examples">Things to ask</a>
+        <p class="side-h">02 · Reference</p>
+        <a href="#tools">Tools</a><a href="#networks">Networks</a><a href="#layerzero">LayerZero tracking</a>
+        <p class="side-h">03 · Trust</p>
+        <a href="#safety">Safety model</a>
+        <p class="side-h">04 · Developers</p>
+        <a href="#self-host">Self-hosting</a><a href="#http">HTTP endpoints</a>
+      </aside>
+
+      <article class="prose" id="doc">
+        <section id="overview">
+          <p class="kicker">01 · Getting started</p>
+          <h1 class="page-title">Overview</h1>
+          <p class="lede">Plexa is the MCP gateway for LayerZero's Zero and every EVM chain. You add one URL to your AI client, and your assistant can read wallets and contracts, simulate transactions before you sign, and follow cross-chain messages, all from a normal chat.</p>
+          <p class="doc-meta">5 min read · Updated November 2026 · v0.1</p>
+          <div class="cards">
+            <a class="card" href="#quickstart"><b>Quickstart</b><span>Connect Claude, Claude Code, ChatGPT, Cursor or VS Code in a minute.</span></a>
+            <a class="card" href="#tools"><b>Tools</b><span>All twelve tools with inputs, outputs and an example for each.</span></a>
+            <a class="card" href="#safety"><b>Safety model</b><span>Read-only by design. What Plexa checks before you sign.</span></a>
+            <a class="card" href="#self-host"><b>Self-hosting</b><span>Run your own Plexa with your own RPCs, locally or on any host.</span></a>
+          </div>
+          <h3>What sets it apart</h3>
+          <ul>
+            <li><b>Built for Zero.</b> LayerZero's new chain is wired in before launch; its zones switch on with one line of configuration.</li>
+            <li><b>Cross-chain native.</b> Any LayerZero message can be tracked by its source transaction, with every DVN named.</li>
+            <li><b>Simulation first.</b> Transactions are dry-run on live state and explained before anyone signs anything.</li>
+            <li><b>No keys, no accounts.</b> Plexa never asks for a private key and needs no sign-up.</li>
+          </ul>
+        </section>
+
+        <section id="quickstart">
+          <p class="kicker">Getting started</p>
+          <h2>Quickstart</h2>
+          <p>Everything starts with one URL. No API key, no wallet connection.</p>
+          <pre class="code"><code class="js-mcp-url">https://plexahq.vercel.app/mcp</code><button class="copy-btn sm" data-copy-mcp type="button">Copy</button></pre>
+          <h3>Claude (web, desktop, mobile)</h3>
+          <ol><li>Open <b>Settings → Connectors</b>.</li><li>Choose <b>Add custom connector</b>, paste the URL and save.</li><li>Enable Plexa in a chat and ask away.</li></ol>
+          <h3>Claude Code</h3>
+          <pre class="code"><code data-template="claude mcp add --transport http plexa {url}">claude mcp add --transport http plexa https://plexahq.vercel.app/mcp</code><button class="copy-btn sm" data-copy-code type="button">Copy</button></pre>
+          <h3>ChatGPT</h3>
+          <p>Add a custom MCP connector in ChatGPT's settings and paste the URL. No authentication is required.</p>
+          <h3>Cursor</h3>
+          <p>Add to <code>~/.cursor/mcp.json</code>:</p>
+          <pre class="code"><code data-template='{ "mcpServers": { "plexa": { "url": "{url}" } } }'>{ "mcpServers": { "plexa": { "url": "https://plexahq.vercel.app/mcp" } } }</code><button class="copy-btn sm" data-copy-code type="button">Copy</button></pre>
+          <h3>VS Code</h3>
+          <p>Add to <code>.vscode/mcp.json</code>, then start the server from the MCP view and use it in agent mode:</p>
+          <pre class="code"><code data-template='{ "servers": { "plexa": { "type": "http", "url": "{url}" } } }'>{ "servers": { "plexa": { "type": "http", "url": "https://plexahq.vercel.app/mcp" } } }</code><button class="copy-btn sm" data-copy-code type="button">Copy</button></pre>
+        </section>
+
+        <section id="examples">
+          <p class="kicker">Getting started</p>
+          <h2>Things to ask</h2>
+          <div class="asks">
+            <span>"What's in 0xd8dA…6045 on Base?"</span><span>"Is this approval safe to sign?" (paste the calldata)</span><span>"What does this contract do, and is it verified?"</span><span>"Where is my bridge transfer?" (paste the tx hash)</span><span>"What's happening on LayerZero right now?"</span><span>"Which DVNs secure messages to Base?"</span><span>"What did this transaction actually do?"</span><span>"How many USDC exist on Arbitrum?"</span>
+          </div>
+        </section>
+
+        <section id="tools">
+          <p class="kicker">02 · Reference</p>
+          <h2>Tools</h2>
+          <p>Twelve tools, all read-only. Your assistant picks them automatically; you never need to name one. Chains are given by key (<code>base</code>, <code>ethereum</code>, <code>arbitrum</code>, <code>hyperevm</code>, <code>zero-atlas</code>…) or numeric chain ID.</p>
+          <div id="tool-ref"></div>
+        </section>
+
+        <section id="networks">
+          <p class="kicker">Reference</p>
+          <h2>Networks</h2>
+          <div class="table-wrap"><table class="table">
+            <thead><tr><th>Key</th><th>Network</th><th>Chain ID</th><th>LZ EID</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td><code>zero-atlas</code></td><td>Zero · ATLAS zone</td><td>tba</td><td>tba</td><td>Enabled at mainnet (Nov 30)</td></tr>
+              <tr><td><code>zero-interop</code></td><td>Zero · Interop zone</td><td>tba</td><td>tba</td><td>Enabled at mainnet (Nov 30)</td></tr>
+              <tr><td><code>ethereum</code></td><td>Ethereum</td><td>1</td><td>30101</td><td>Live</td></tr>
+              <tr><td><code>base</code></td><td>Base</td><td>8453</td><td>30184</td><td>Live</td></tr>
+              <tr><td><code>arbitrum</code></td><td>Arbitrum One</td><td>42161</td><td>30110</td><td>Live</td></tr>
+              <tr><td><code>hyperevm</code></td><td>HyperEVM</td><td>999</td><td>30367</td><td>Live</td></tr>
+              <tr><td><code>ethereum-sepolia</code></td><td>Ethereum Sepolia</td><td>11155111</td><td>40161</td><td>Live</td></tr>
+              <tr><td><code>arbitrum-sepolia</code></td><td>Arbitrum Sepolia</td><td>421614</td><td>40231</td><td>Live</td></tr>
+              <tr><td><code>base-sepolia</code></td><td>Base Sepolia</td><td>84532</td><td>40245</td><td>Live</td></tr>
+            </tbody>
+          </table></div>
+          <p>Message tracking covers every chain LayerZero connects, more than a hundred, through LayerZero Scan.</p>
+        </section>
+
+        <section id="layerzero">
+          <p class="kicker">Reference</p>
+          <h2>LayerZero tracking</h2>
+          <p>A LayerZero message is sent on a source chain, verified by the application's DVNs (decentralised verifier networks), then executed on the destination chain. <code>lz_track_message</code> takes the source transaction hash and reports where the message is, names each DVN and explains the status:</p>
+          <div class="table-wrap"><table class="table">
+            <thead><tr><th>Status</th><th>What it means</th></tr></thead>
+            <tbody>
+              <tr><td><span class="pill pill-sig">INFLIGHT</span></td><td>Sent and on its way; DVNs are verifying. Delivery normally follows within minutes.</td></tr>
+              <tr><td><span class="pill pill-sig">CONFIRMING</span></td><td>Waiting for enough block confirmations on the source chain.</td></tr>
+              <tr><td><span class="pill pill-ok">DELIVERED</span></td><td>Verified and executed on the destination chain. Nothing else to do.</td></tr>
+              <tr><td><span class="pill">PAYLOAD_STORED</span></td><td>Verified, but execution reverted; the payload is stored and can be retried.</td></tr>
+              <tr><td><span class="pill">BLOCKED</span></td><td>An earlier message on the same ordered pathway hasn't been delivered yet.</td></tr>
+              <tr><td><span class="pill">FAILED</span></td><td>Delivery failed on the destination chain.</td></tr>
+            </tbody>
+          </table></div>
+        </section>
+
+        <section id="safety">
+          <p class="kicker">03 · Trust</p>
+          <h2>Safety model</h2>
+          <p>Plexa is read-only. It never asks for a private key, holds no funds and never broadcasts a transaction. When signing arrives, transactions will be prepared by your assistant, simulated by Plexa and signed by you, in your own wallet.</p>
+          <h3>What simulation flags</h3>
+          <ul>
+            <li>Transactions that would revert, with the decoded reason</li>
+            <li>Unlimited ERC-20 approvals, and approvals to addresses with no contract code</li>
+            <li>Tokens sent to the token's own contract address</li>
+            <li>Calls to contracts with no verified source on Sourcify</li>
+            <li>EIP-7702 delegations to unverified code</li>
+            <li>Native value larger than the sender's balance</li>
+          </ul>
+          <p>Simulation reflects the chain state at the moment it runs; state can change before a real transaction is mined.</p>
+        </section>
+
+        <section id="self-host">
+          <p class="kicker">04 · Developers</p>
+          <h2>Self-hosting</h2>
+          <p>Plexa is open source. Run it with your own RPC endpoints, locally over stdio or as a remote HTTP server.</p>
+          <pre class="code"><code>git clone https://github.com/plexahq/plexahq && cd plexahq
+npm install && npm run build
+node dist/stdio.js                  # local, for Claude Desktop / Cursor
+HOST=0.0.0.0 PORT=3000 npm start    # remote, MCP at /mcp</code></pre>
+          <div class="table-wrap"><table class="table">
+            <thead><tr><th>Variable</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td><code>PLEXA_RPC_&lt;CHAIN&gt;</code></td><td>RPC URL for a chain, e.g. <code>PLEXA_RPC_ZERO_ATLAS</code>, <code>PLEXA_RPC_BASE</code></td></tr>
+              <tr><td><code>PLEXA_CHAIN_ID_&lt;CHAIN&gt;</code></td><td>Chain ID (otherwise read from the RPC)</td></tr>
+              <tr><td><code>PLEXA_EXPLORER_&lt;CHAIN&gt;</code></td><td>Block explorer base URL</td></tr>
+              <tr><td><code>PLEXA_EXTRA_CHAINS</code></td><td>JSON array of additional EVM chains</td></tr>
+              <tr><td><code>PORT</code>, <code>HOST</code></td><td>HTTP bind address (default <code>127.0.0.1:3000</code>)</td></tr>
+            </tbody>
+          </table></div>
+        </section>
+
+        <section id="http">
+          <p class="kicker">Developers</p>
+          <h2>HTTP endpoints</h2>
+          <div class="table-wrap"><table class="table">
+            <thead><tr><th>Endpoint</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>POST /mcp</code></td><td>The MCP endpoint (Streamable HTTP, stateless, JSON responses).</td></tr>
+              <tr><td><code>GET /health</code></td><td>Liveness check: <code>{"ok": true, "version": …}</code></td></tr>
+              <tr><td><code>GET /api/live</code></td><td>Latest LayerZero messages and block heights. <code>?messages=1…50</code>. Cached at the edge for 10 seconds.</td></tr>
+            </tbody>
+          </table></div>
+          <p>Questions or something missing? <a class="link" href="/contact">Get in touch</a> or open an issue on <a class="link" href="https://github.com/plexahq/plexahq/issues" target="_blank" rel="noopener">GitHub</a>.</p>
+        </section>
+      </article>
+
+      <aside class="docs-toc" aria-label="On this page"><p class="side-h">On this page</p><nav id="toc"></nav></aside>
+    </div>
+  </main>
+
+  <!--#include footer-->
+  <script type="module" src="/src/page.ts"></script>
+</body>
+</html>

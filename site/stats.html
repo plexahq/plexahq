@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live stats · Plexa</title>
+  <meta name="description" content="Live network stats read through Plexa's own tools: gateway status, chain heads, and what is moving across LayerZero right now.">
+  <meta name="theme-color" content="#0A0B0E">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body class="page" data-page="stats" data-scene="0">
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="node-labels" id="node-labels" aria-hidden="true"></div>
+  <!--#include nav-->
+
+  <main>
+    <section class="page-hero">
+      <div class="wrap">
+        <p class="kicker" data-reveal>Network · Stats</p>
+        <h1 class="display page-title" data-split>Stats, <em>live.</em></h1>
+        <p class="lede" data-reveal>A live snapshot of the networks Plexa reaches, read through Plexa's own tools. It refreshes every few seconds while this page is open.</p>
+        <p class="status-line" data-reveal><span class="dot" id="st-dot"></span><span id="st-text">Connecting…</span></p>
+      </div>
+    </section>
+
+    <section class="block tight">
+      <div class="wrap">
+        <div class="kpis">
+          <div class="kpi panel" data-reveal><span class="kpi-k">Gateway</span><b id="k-gw">—</b><small id="k-gw-s">health check latency</small></div>
+          <div class="kpi panel" data-reveal><span class="kpi-k">Tools</span><b>12</b><small>all read-only</small></div>
+          <div class="kpi panel" data-reveal><span class="kpi-k">Live networks</span><b>4 <em>+2</em></b><small>Zero zones switch on Nov 30</small></div>
+          <div class="kpi panel" data-reveal><span class="kpi-k">Zero mainnet</span><b id="k-zero">—</b><small>days to go</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block tight">
+      <div class="wrap">
+        <p class="kicker" data-reveal>01 · Chain heads</p>
+        <h2 class="title sm" data-split>Every block, <em>as it lands.</em></h2>
+        <div class="heads" id="heads"></div>
+      </div>
+    </section>
+
+    <section class="block tight">
+      <div class="wrap">
+        <p class="kicker" data-reveal>02 · LayerZero</p>
+        <h2 class="title sm" data-split>What's moving <em>right now.</em></h2>
+        <p class="body" data-reveal id="lz-scope">Based on the most recent messages across LayerZero mainnet.</p>
+        <div class="kpis four">
+          <div class="kpi panel" data-reveal><span class="kpi-k">Messages</span><b id="k-n">—</b><small>in this snapshot</small></div>
+          <div class="kpi panel" data-reveal><span class="kpi-k">Delivered</span><b id="k-del">—</b><small>of the snapshot</small></div>
+          <div class="kpi panel" data-reveal><span class="kpi-k">In flight</span><b id="k-fly">—</b><small>being verified now</small></div>
+          <div class="kpi panel" data-reveal><span class="kpi-k">Median delivery</span><b id="k-med">—</b><small>source to destination</small></div>
+        </div>
+        <div class="statusbar panel" data-reveal><div class="sb" id="sb"></div><div class="sb-legend" id="sb-legend"></div></div>
+        <div class="two">
+          <div class="panel bars" data-reveal><div class="demo-head"><span class="demo-title">Most active apps</span></div><div id="apps"></div></div>
+          <div class="panel bars" data-reveal><div class="demo-head"><span class="demo-title">Busiest routes</span></div><div id="routes"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block tight">
+      <div class="wrap">
+        <p class="kicker" data-reveal>03 · Latest</p>
+        <h2 class="title sm" data-split>Latest <em>messages.</em></h2>
+        <div class="table-wrap panel" data-reveal>
+          <table class="table">
+            <thead><tr><th>App</th><th>Route</th><th>Status</th><th>DVNs</th><th>Delivery</th><th>Sent</th><th></th></tr></thead>
+            <tbody id="latest"><tr><td colspan="7">Loading…</td></tr></tbody>
+          </table>
+        </div>
+        <p class="note" data-reveal>Messages come from LayerZero Scan, read through Plexa's <code>lz_latest_messages</code>. Block heights come from public RPC nodes.</p>
+      </div>
+    </section>
+  </main>
+
+  <!--#include footer-->
+  <script type="module" src="/src/page.ts"></script>
+</body>
+</html>

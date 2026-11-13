@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How Plexa works · Plexa</title>
+  <meta name="description" content="How Plexa connects your AI assistant to LayerZero's Zero and every EVM chain: the path of a request, the tool groups, simulation before signature and the networks it reaches.">
+  <meta name="theme-color" content="#0A0B0E">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body class="page" data-page="product" data-scene="0">
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="node-labels" id="node-labels" aria-hidden="true"></div>
+  <!--#include nav-->
+
+  <main>
+    <section class="page-hero">
+      <div class="wrap">
+        <p class="kicker" data-reveal>Product · How it works</p>
+        <h1 class="display page-title" data-split>How Plexa <em>works.</em></h1>
+        <p class="lede" data-reveal>Plexa is an MCP gateway for on-chain networks. You add one URL to your AI client, and from then on it can read any wallet, explain any contract, dry-run any transaction and follow any LayerZero message, all in plain conversation. This page walks through what happens between your question and the answer.</p>
+        <dl class="meta-row" data-reveal>
+          <div><dt>Endpoint</dt><dd><code class="js-mcp-url">https://plexahq.vercel.app/mcp</code></dd></div>
+          <div><dt>Networks</dt><dd>Zero · Ethereum · Base · Arbitrum · HyperEVM</dd></div>
+          <div><dt>Cross-chain</dt><dd>The whole LayerZero network</dd></div>
+          <div><dt>Access</dt><dd>Free, no wallet, no key</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="wrap">
+        <div class="callout" data-reveal>
+          <span class="callout-k">MCP in one paragraph</span>
+          <p>The Model Context Protocol is an open standard for connecting AI assistants to tools. A client that supports it (Claude, Claude Code, ChatGPT, Cursor, VS Code) can be pointed at an MCP server and will see that server's tools, with a description of what each one does and what it needs. When you ask something, the assistant decides which tool fits, calls it, and uses the result in its reply. Plexa is an MCP server built for blockchains.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="wrap">
+        <p class="kicker" data-reveal>01 · The path of a request</p>
+        <h2 class="title" data-split>From a sentence <em>to the chain</em> and back.</h2>
+        <figure class="diagram panel" data-reveal>
+          <svg viewBox="0 0 1100 430" role="img" aria-label="Your AI client sends a tool call to Plexa, which reads RPC nodes, LayerZero Scan and Sourcify, and returns structured data. Your wallet signs only when you decide.">
+            <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#FF5B1F"/></marker></defs>
+            <g font-family="Fragment Mono, monospace" font-size="12" fill="#9A9DA4">
+              <g class="d-box"><rect x="20" y="70" width="250" height="120"/><text x="40" y="100" fill="#6C7078">YOUR AI CLIENT</text><text x="40" y="128" fill="#ECEAE4" font-size="14">Claude · ChatGPT · Cursor</text><text x="40" y="150" fill="#ECEAE4" font-size="14">VS Code · Claude Code</text><text x="40" y="174">you ask in plain words</text></g>
+              <g class="d-box d-hub"><rect x="420" y="50" width="260" height="160"/><text x="440" y="80" fill="#FF5B1F">PLEXA</text><text x="440" y="108" fill="#ECEAE4" font-size="14">MCP gateway · /mcp</text><text x="440" y="134">12 read-only tools</text><text x="440" y="156">simulates · decodes · explains</text><text x="440" y="190" fill="#2FD3B5">holds no keys</text></g>
+              <g class="d-box"><rect x="830" y="20" width="250" height="78"/><text x="850" y="48" fill="#6C7078">RPC NODES</text><text x="850" y="74" fill="#ECEAE4" font-size="14">Zero · Ethereum · Base · …</text></g>
+              <g class="d-box"><rect x="830" y="116" width="250" height="78"/><text x="850" y="144" fill="#6C7078">LAYERZERO</text><text x="850" y="170" fill="#ECEAE4" font-size="14">Scan API · deployment registry</text></g>
+              <g class="d-box"><rect x="830" y="212" width="250" height="78"/><text x="850" y="240" fill="#6C7078">SOURCIFY</text><text x="850" y="266" fill="#ECEAE4" font-size="14">verified contract source</text></g>
+              <g class="d-box d-dash"><rect x="20" y="300" width="250" height="100"/><text x="40" y="330" fill="#6C7078">YOUR WALLET</text><text x="40" y="358" fill="#ECEAE4" font-size="14">signs only what you approve</text><text x="40" y="380">never touched by Plexa</text></g>
+              <g stroke="#FF5B1F" stroke-width="1.4" fill="none" class="d-flow">
+                <path d="M270 110 H420" marker-end="url(#arr)"/><path d="M420 160 H270" marker-end="url(#arr)" stroke="#2FD3B5"/>
+                <path d="M680 100 H760 V59 H830" marker-end="url(#arr)"/><path d="M680 130 H830" marker-end="url(#arr)"/><path d="M680 160 H760 V251 H830" marker-end="url(#arr)"/>
+              </g>
+              <path d="M145 190 V300" stroke="#2E323A" stroke-dasharray="4 5"/>
+              <text x="286" y="98" fill="#FF5B1F">1 · tool call</text><text x="300" y="180" fill="#2FD3B5">4 · answer</text><text x="690" y="88">2 · read</text><text x="690" y="230">3 · verify</text><text x="156" y="252">5 · you decide</text>
+            </g>
+          </svg>
+          <figcaption>A question becomes a tool call, Plexa reads live sources, checks what it found, and returns structured data your assistant explains. Nothing is signed unless you sign it, in your own wallet.</figcaption>
+        </figure>
+        <ol class="steps-table">
+          <li data-reveal><span class="st-n">01</span><b>You ask</b><p>In plain words, in the client you already use. "Is this approval safe?" "Where is my bridge transfer?"</p><span class="st-k">Your AI client</span></li>
+          <li data-reveal><span class="st-n">02</span><b>A tool is picked</b><p>Your assistant sees Plexa's twelve tools and their inputs, chooses the ones that fit and fills in the details.</p><span class="st-k">MCP tool call</span></li>
+          <li data-reveal><span class="st-n">03</span><b>Plexa reads live sources</b><p>RPC nodes for state, LayerZero Scan and the official registry for cross-chain messages, Sourcify for verified code.</p><span class="st-k">Read-only</span></li>
+          <li data-reveal><span class="st-n">04</span><b>The answer is checked</b><p>Calls are decoded, proxies followed, transactions simulated, known drainer patterns flagged.</p><span class="st-k">Simulate · decode</span></li>
+          <li data-reveal><span class="st-n">05</span><b>You decide</b><p>Your assistant explains the result in plain language. If anything ever needs a signature, it is yours to give.</p><span class="st-k">Your wallet</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="wrap">
+        <p class="kicker" data-reveal>02 · Tools</p>
+        <h2 class="title" data-split>Four groups. <em>Twelve tools.</em></h2>
+        <div class="groups">
+          <article class="group panel" data-reveal><span class="g-i">R</span><h3>Read</h3><p>Live chain data, the moment you ask.</p><ul><li>get_balance</li><li>get_token_info</li><li>get_block</li><li>get_transaction</li><li>list_chains</li></ul></article>
+          <article class="group panel" data-reveal><span class="g-i">I</span><h3>Inspect</h3><p>What a contract is and what it holds.</p><ul><li>get_contract_info</li><li>read_contract</li></ul></article>
+          <article class="group panel" data-reveal><span class="g-i">P</span><h3>Protect</h3><p>Dry-run before anything is signed.</p><ul><li>simulate_transaction</li></ul></article>
+          <article class="group panel" data-reveal><span class="g-i">T</span><h3>Track</h3><p>Every LayerZero message, hop by hop.</p><ul><li>lz_track_message</li><li>lz_latest_messages</li><li>lz_list_messages</li><li>lz_chain_info</li></ul></article>
+        </div>
+        <p class="more" data-reveal><a class="link" href="/docs#tools">Full tool reference with inputs and examples →</a></p>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="kicker" data-reveal>03 · Simulation</p>
+          <h2 class="title" data-split>Simulated first. <em>Then it's your call.</em></h2>
+          <p class="body" data-reveal>Before you sign anything, Plexa runs the exact transaction against live chain state without broadcasting it. It reports whether it would succeed, what it would cost and what it really does, decoded from verified source. Then it looks for the traps people sign every day:</p>
+          <ul class="ticks" data-reveal>
+            <li>Unlimited token approvals</li>
+            <li>Approvals to plain wallets instead of contracts</li>
+            <li>Tokens sent to the token contract itself</li>
+            <li>Unverified contracts and unverified EIP-7702 delegates</li>
+            <li>Transfers that would revert, caught before gas is spent</li>
+          </ul>
+        </div>
+        <div class="console" data-reveal>
+          <div class="console-head"><span>simulate_transaction · base</span><span class="console-live"><span class="dot dot-ok"></span>live state</span></div>
+          <div class="console-body static">
+            <div class="c-call">→ <b>simulate_transaction</b> USDC.approve(0x…dEaD, max)</div>
+            <div class="c-res"><span class="k">would succeed</span> · fee 0.00000034 ETH<br>decoded · approve()<br><span class="w">⚠ The approved spender is a plain wallet, not a contract.</span><br><span class="w">⚠ This grants UNLIMITED USDC spending to 0x…dEaD.</span></div>
+            <div class="c-a">Don't sign this. It gives an ordinary wallet unlimited access to your USDC.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="wrap">
+        <p class="kicker" data-reveal>04 · Networks</p>
+        <h2 class="title" data-split>One gateway, <em>every chain.</em></h2>
+        <div class="table-wrap panel" data-reveal>
+          <table class="table">
+            <thead><tr><th>Network</th><th>Chain ID</th><th>LayerZero EID</th><th>Gas</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Zero · ATLAS zone</td><td>tba</td><td>tba</td><td>ZRO</td><td><span class="pill pill-sig">Nov 30</span></td></tr>
+              <tr><td>Zero · Interop zone</td><td>tba</td><td>tba</td><td>ZRO</td><td><span class="pill pill-sig">Nov 30</span></td></tr>
+              <tr><td>Ethereum</td><td>1</td><td>30101</td><td>ETH</td><td><span class="pill pill-ok">Live</span></td></tr>
+              <tr><td>Base</td><td>8453</td><td>30184</td><td>ETH</td><td><span class="pill pill-ok">Live</span></td></tr>
+              <tr><td>Arbitrum One</td><td>42161</td><td>30110</td><td>ETH</td><td><span class="pill pill-ok">Live</span></td></tr>
+              <tr><td>HyperEVM</td><td>999</td><td>30367</td><td>HYPE</td><td><span class="pill pill-ok">Live</span></td></tr>
+              <tr><td>Sepolia testnets (Ethereum, Arbitrum, Base)</td><td>various</td><td>40161 · 40231 · 40245</td><td>ETH</td><td><span class="pill pill-ok">Live</span></td></tr>
+              <tr><td>Every LayerZero chain (messages only)</td><td>—</td><td>100+</td><td>—</td><td><span class="pill pill-ok">Live</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="cta-row" data-reveal>
+          <a class="btn btn-sig" href="/#connect">Connect your AI <span aria-hidden="true">→</span></a>
+          <a class="btn btn-ghost" href="/docs">Read the docs</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!--#include footer-->
+  <script type="module" src="/src/page.ts"></script>
+</body>
+</html>

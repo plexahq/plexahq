@@ -50,8 +50,10 @@ export function handleHealth(): Response {
  * GET /api/live: latest LayerZero messages and block heights for the website.
  * Cached at the CDN for a few seconds so traffic never multiplies upstream RPC calls.
  */
-export async function handleLive(): Promise<Response> {
-  const snapshot = await getLiveSnapshot(getRegistry());
+export async function handleLive(url?: URL): Promise<Response> {
+  const requested = Number(url?.searchParams.get("messages") ?? 16);
+  const messages = Number.isInteger(requested) ? Math.min(50, Math.max(1, requested)) : 16;
+  const snapshot = await getLiveSnapshot(getRegistry(), 6000, messages);
   return new Response(JSON.stringify(snapshot), {
     status: 200,
     headers: {

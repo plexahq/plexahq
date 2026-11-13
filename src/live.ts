@@ -26,9 +26,9 @@ export interface LiveSnapshot {
  * the latest LayerZero messages and the head block of a few chains.
  * Every part fails soft so one slow upstream never blanks the whole feed.
  */
-export async function getLiveSnapshot(registry: ChainRegistry, timeoutMs = 6000): Promise<LiveSnapshot> {
+export async function getLiveSnapshot(registry: ChainRegistry, timeoutMs = 6000, messageCount = 16): Promise<LiveSnapshot> {
   const [messages, blocks] = await Promise.all([
-    withTimeout(scanGet("mainnet", "/messages/latest?limit=16"), timeoutMs)
+    withTimeout(scanGet("mainnet", `/messages/latest?limit=${messageCount}`), timeoutMs)
       .then(({ data }) => data.map((m) => compactMessage(m, "mainnet")))
       .catch(() => []),
     Promise.all(

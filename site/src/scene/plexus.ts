@@ -2,21 +2,25 @@ import gsap from "gsap";
 import * as THREE from "three";
 import { ACCENT_RATIO, CHAIN_NODES, FORMATIONS, SATELLITES, bow, nodeLayouts, rng, type Vec3 } from "./formations";
 
-/** Where and how each chapter's formation sits on screen. x/y are fractions of the visible width/height. */
-interface View { x: number; y: number; scale: number; spin: number; rotX: number; rotY: number; noise: number; opacity: number; graph: 0 | 1 | 2 }
-const VIEWS: View[] = [
-  { x: 0.22, y: 0.0, scale: 1.0, spin: 0.05, rotX: 0.18, rotY: 0, noise: 0, opacity: 1, graph: 1 },
-  { x: 0.24, y: 0.0, scale: 1.0, spin: 0.015, rotX: 0, rotY: 0, noise: 0.16, opacity: 0.8, graph: 0 },
-  { x: 0.12, y: 0.0, scale: 0.92, spin: 0, rotX: 0.05, rotY: -0.25, noise: 0, opacity: 0.8, graph: 0 },
-  { x: 0.08, y: 0.06, scale: 1.0, spin: 0, rotX: 0.12, rotY: -0.35, noise: 0, opacity: 0.7, graph: 0 },
-  { x: 0.16, y: 0.0, scale: 1.05, spin: 0, rotX: 0.05, rotY: 0.75, noise: 0, opacity: 0.8, graph: 0 },
-  { x: 0.2, y: 0.14, scale: 1.0, spin: 0.03, rotX: 0.2, rotY: 0, noise: 0, opacity: 0.95, graph: 2 },
-  { x: 0.0, y: -0.02, scale: 1.12, spin: 0.04, rotX: 0.0, rotY: 0, noise: 0, opacity: 0.85, graph: 0 },
-  { x: 0.23, y: 0.1, scale: 0.95, spin: 0.08, rotX: 0.3, rotY: 0, noise: 0, opacity: 0.95, graph: 0 },
-  { x: 0.0, y: 0.0, scale: 1.0, spin: 0, rotX: 0, rotY: 0, noise: 0.01, opacity: 0.55, graph: 0 },
-  { x: 0.24, y: 0.0, scale: 0.95, spin: 0.12, rotX: 0.1, rotY: 0, noise: 0, opacity: 0.95, graph: 0 },
-  { x: 0.24, y: -0.08, scale: 1.0, spin: 0.05, rotX: 0.95, rotY: 0, noise: 0, opacity: 0.55, graph: 0 },
-  { x: 0.0, y: 0.17, scale: 0.68, spin: 0, rotX: 0, rotY: 0, noise: 0, opacity: 1, graph: 0 },
+/**
+ * Where and how each formation sits on screen. x/y are fractions of the visible width/height.
+ * "side" views sit in the free right column; "full" views (scale > 1.3) fill the screen behind content.
+ */
+export interface View { x: number; y: number; scale: number; spin: number; rotX: number; rotY: number; noise: number; opacity: number; graph: 0 | 1 | 2; labels: number }
+const V = (x: number, y: number, scale: number, spin: number, rotX: number, rotY: number, noise: number, opacity: number, graph: 0 | 1 | 2 = 0, labels = 0): View => ({ x, y, scale, spin, rotX, rotY, noise, opacity, graph, labels });
+export const VIEWS: View[] = [
+  V(0.22, 0.0, 1.0, 0.05, 0.18, 0, 0, 1, 1, 1), // 0 hero: plexus, side
+  V(0.02, 0.0, 1.75, 0.012, 0, 0, 0.14, 0.6), // 1 gap: static, full
+  V(0.04, 0.0, 1.55, 0, 0.05, -0.25, 0, 0.62), // 2 connect: convergence, full
+  V(0.0, -0.02, 1.45, 0, 0.12, -0.3, 0, 0.55), // 3 read: blocks, full
+  V(0.04, 0.0, 1.7, 0, 0.05, 0.8, 0, 0.55), // 4 simulate: scanner, full
+  V(0.02, 0.04, 1.65, 0.025, 0.2, 0, 0, 0.78, 2, 0), // 5 cross-chain: ring graph, full
+  V(0.0, -0.02, 1.12, 0.04, 0, 0, 0, 0.85), // 6 zero: orbits, centre
+  V(0.23, 0.1, 0.95, 0.08, 0.3, 0, 0, 0.95), // 7 security: lattice, side
+  V(0.0, 0.0, 1.0, 0, 0, 0, 0.01, 0.55), // 8 tools: wall, full
+  V(0.24, 0.0, 0.95, 0.12, 0.1, 0, 0, 0.95), // 9 roadmap: helix, side
+  V(0.05, -0.05, 1.7, 0.04, 0.95, 0, 0, 0.45), // 10 faq: galaxy, full
+  V(0.0, 0.17, 0.68, 0, 0, 0, 0, 1), // 11 final: logo, centre
 ];
 
 const INK = new THREE.Color("#ECEAE4");
@@ -25,35 +29,56 @@ const OK = new THREE.Color("#2FD3B5");
 const DIM = new THREE.Color("#5A5F68");
 
 const pointsVert = /* glsl */ `
-  attribute vec3 aFrom; attribute vec3 aTo; attribute float aSeed;
-  uniform float uMix, uTime, uSize, uPixelRatio, uNoise, uMouseStrength, uAccent;
+  attribute vec3 aA; attribute vec3 aC; attribute vec3 aF; attribute float aSeed;
+  uniform mat4 uMA, uMC;
+  uniform float uT, uIntro, uTime, uSize, uPixelRatio, uMouseStrength, uBoost;
+  uniform float uNoiseA, uNoiseC, uAccA, uAccC, uOpA, uOpC, uFloodOp;
   uniform vec3 uMouse;
   varying float vSeed; varying float vAlpha; varying float vAccent;
+
+  float ease(float x) { x = clamp(x, 0.0, 1.0); return x * x * (3.0 - 2.0 * x); }
+
+  // The full-screen "storm" between formations: a disk of stardust that swirls with scroll.
+  vec3 storm(vec3 f, float s) {
+    float tw = (uT - 0.5) * 1.6 * (0.35 + 0.65 * s) + uTime * 0.02;
+    float c = cos(tw), sn = sin(tw);
+    vec3 p = vec3(c * f.x - sn * f.y, sn * f.x + c * f.y, f.z);
+    p += vec3(sin(p.y * 0.45 + uTime * 0.7 + s * 6.0), cos(p.x * 0.35 + uTime * 0.55 + s * 4.0), sin(uTime * 0.4 + s * 9.0)) * 0.35;
+    return p;
+  }
+
   void main() {
-    float d = clamp((uMix - aSeed * 0.35) / 0.65, 0.0, 1.0);
-    d = d * d * (3.0 - 2.0 * d);
-    vec3 p = mix(aFrom, aTo, d);
-    float mid = sin(d * 3.14159);
-    p += vec3(sin(aSeed * 40.0 + uTime * 0.6), cos(aSeed * 31.0 + uTime * 0.5), sin(aSeed * 17.0 + uTime * 0.4)) * mid * 0.55;
-    p += vec3(sin(uTime * 0.55 + aSeed * 12.0), cos(uTime * 0.45 + aSeed * 9.0), sin(uTime * 0.35 + aSeed * 7.0)) * (0.022 + uNoise);
+    float s = aSeed;
+    vec3 pa = (uMA * vec4(aA, 1.0)).xyz;
+    vec3 pc = (uMC * vec4(aC, 1.0)).xyz;
+    vec3 pf = storm(aF, s);
+    float t1 = ease((uT * 2.0 - s * 0.4) / 0.6);
+    float t2 = ease(((uT - 0.5) * 2.0 - s * 0.4) / 0.6);
+    vec3 p = mix(mix(pa, pf, t1), pc, t2);
+    // opening: the storm condenses into the first formation
+    float ti = ease((uIntro * 1.4 - s * 0.4));
+    p = mix(storm(aF * 1.25, s), p, ti);
+    float flood = max(t1 * (1.0 - t2), 1.0 - ti);
+    float noise = mix(uNoiseA, uNoiseC, t2) + uBoost;
+    p += vec3(sin(uTime * 0.55 + s * 12.0), cos(uTime * 0.45 + s * 9.0), sin(uTime * 0.35 + s * 7.0)) * (0.022 + noise);
     vec3 dm = p - uMouse; float dist = length(dm);
-    p += normalize(dm + vec3(1e-4)) * smoothstep(1.5, 0.0, dist) * uMouseStrength;
+    p += normalize(dm + vec3(1e-4)) * smoothstep(1.6, 0.0, dist) * uMouseStrength;
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     gl_Position = projectionMatrix * mv;
-    gl_PointSize = uSize * (0.55 + aSeed * 0.95) * uPixelRatio * (11.0 / -mv.z);
-    vSeed = aSeed;
-    vAccent = step(1.0 - uAccent, fract(aSeed * 7.13));
-    vAlpha = smoothstep(26.0, 7.0, -mv.z);
+    gl_PointSize = uSize * (0.55 + s * 0.95) * (1.0 + flood * 0.9) * uPixelRatio * (11.0 / max(1.0, -mv.z));
+    vSeed = s;
+    float acc = mix(mix(uAccA, uAccC, t2), 0.26, flood);
+    vAccent = step(1.0 - acc, fract(s * 7.13));
+    vAlpha = smoothstep(28.0, 6.5, -mv.z) * mix(mix(uOpA, uOpC, t2), uFloodOp, flood);
   }`;
 const pointsFrag = /* glsl */ `
-  uniform vec3 uInk; uniform vec3 uSig; uniform float uOpacity;
+  uniform vec3 uInk; uniform vec3 uSig;
   varying float vSeed; varying float vAlpha; varying float vAccent;
   void main() {
     vec2 c = gl_PointCoord - 0.5; float r = length(c);
     if (r > 0.5) discard;
     float a = pow(smoothstep(0.5, 0.0, r), 1.5);
-    vec3 col = mix(uInk, uSig, vAccent);
-    gl_FragColor = vec4(col, a * uOpacity * vAlpha * (0.32 + vSeed * 0.68) * (1.0 + vAccent * 0.6));
+    gl_FragColor = vec4(mix(uInk, uSig, vAccent), a * vAlpha * (0.32 + vSeed * 0.68) * (1.0 + vAccent * 0.6));
   }`;
 
 const glowVert = /* glsl */ `
@@ -63,7 +88,7 @@ const glowVert = /* glsl */ `
   void main() {
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mv;
-    gl_PointSize = aSize * uScale * uPixelRatio * (11.0 / -mv.z);
+    gl_PointSize = aSize * uScale * uPixelRatio * (11.0 / max(1.0, -mv.z));
     vColor = aColor; vAlpha = aAlpha;
   }`;
 const glowFrag = /* glsl */ `
@@ -78,25 +103,31 @@ const glowFrag = /* glsl */ `
   }`;
 
 interface Pulse { a: number; b: number; t0: number; dur: number; color: THREE.Color }
+export interface PlexusOptions { count: number; reduced: boolean; labels: HTMLElement; views?: View[] }
 
-export interface PlexusOptions { count: number; reduced: boolean; labels: HTMLElement }
+const ease = (x: number) => {
+  const c = Math.min(1, Math.max(0, x));
+  return c * c * (3 - 2 * c);
+};
 
 export class Plexus {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-  private root = new THREE.Group();
-  private spinner = new THREE.Group();
   private points: THREE.Points;
-  private pointMat: THREE.ShaderMaterial;
-  private from: Float32Array;
-  private to: Float32Array;
-  private seeds: Float32Array;
+  private mat: THREE.ShaderMaterial;
+  private aA: THREE.BufferAttribute;
+  private aC: THREE.BufferAttribute;
+  private aF: THREE.BufferAttribute;
   private cache = new Map<number, Float32Array>();
-  private chapter = -1;
-  private spinSpeed = 0.05;
-  private spinAngle = 0;
-  private graph = { opacity: 0, layout: 0 };
+  private views: View[];
+  private pair: [number, number] = [-1, -1];
+  private tCur = 0;
+  private tTarget = 0;
+  private graphGroup = new THREE.Group();
+  private graphView = -1;
+  private graphOpacity = 0;
+  private labelFactor = 0;
   private layouts = nodeLayouts();
   private nodePos: Vec3[];
   private threadGeo: THREE.BufferGeometry;
@@ -110,67 +141,66 @@ export class Plexus {
   private mouse = new THREE.Vector3(99, 99, 0);
   private mouseTarget = new THREE.Vector3(99, 99, 0);
   private pointerNdc = new THREE.Vector2(0, 0);
-  private last = performance.now();
-  private elapsed = 0;
-  private labelFactor = 1;
   private running = false;
-  private velocityNoise = 0;
+  private last = performance.now();
+  private time = 0;
+  private boost = 0;
   private viewW = 1;
   private viewH = 1;
   private readonly n: number;
   private readonly trail = 8;
   private readonly maxPulses = 48;
+  private readonly MA = new THREE.Matrix4();
+  private readonly MC = new THREE.Matrix4();
+  private readonly tmp = { p: new THREE.Vector3(), q: new THREE.Quaternion(), s: new THREE.Vector3(), e: new THREE.Euler() };
 
   constructor(private canvas: HTMLCanvasElement, private opts: PlexusOptions) {
     this.n = opts.count;
+    this.views = opts.views ?? VIEWS;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: "high-performance" });
     this.renderer.setClearColor("#0A0B0E", 1);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
     this.camera.position.set(0, 0, 11);
-    this.scene.add(this.root);
-    this.root.add(this.spinner);
 
-    // --- particle field
-    const r = rng(7);
-    this.seeds = new Float32Array(this.n).map(() => r());
-    this.from = new Float32Array(this.n * 3);
-    for (let i = 0; i < this.n; i++) {
-      const a = r() * Math.PI * 2;
-      const b = Math.acos(2 * r() - 1);
-      const R = 9 + r() * 9;
-      this.from.set([Math.cos(a) * Math.sin(b) * R, Math.cos(b) * R, Math.sin(a) * Math.sin(b) * R - 4], i * 3);
-    }
-    this.to = this.formation(0);
+    const seeds = new Float32Array(this.n).map(rng(7));
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(this.n * 3), 3));
-    geo.setAttribute("aFrom", new THREE.BufferAttribute(this.from, 3));
-    geo.setAttribute("aTo", new THREE.BufferAttribute(this.to, 3));
-    geo.setAttribute("aSeed", new THREE.BufferAttribute(this.seeds, 1));
-    geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 50);
-    this.pointMat = new THREE.ShaderMaterial({
+    this.aA = new THREE.BufferAttribute(new Float32Array(this.n * 3), 3);
+    this.aC = new THREE.BufferAttribute(new Float32Array(this.n * 3), 3);
+    this.aF = new THREE.BufferAttribute(new Float32Array(this.n * 3), 3);
+    geo.setAttribute("aA", this.aA);
+    geo.setAttribute("aC", this.aC);
+    geo.setAttribute("aF", this.aF);
+    geo.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
+    geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 80);
+    this.mat = new THREE.ShaderMaterial({
       vertexShader: pointsVert,
       fragmentShader: pointsFrag,
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       uniforms: {
-        uMix: { value: 0 }, uTime: { value: 0 }, uSize: { value: 3.2 }, uPixelRatio: { value: this.renderer.getPixelRatio() },
-        uNoise: { value: 0 }, uMouseStrength: { value: opts.reduced ? 0 : 0.42 }, uAccent: { value: ACCENT_RATIO[0] },
-        uMouse: { value: this.mouse }, uInk: { value: INK }, uSig: { value: SIG }, uOpacity: { value: 1 },
+        uMA: { value: this.MA }, uMC: { value: this.MC },
+        uT: { value: 0 }, uIntro: { value: opts.reduced ? 1 : 0 }, uTime: { value: 0 }, uSize: { value: 3.2 },
+        uPixelRatio: { value: this.renderer.getPixelRatio() }, uMouseStrength: { value: opts.reduced ? 0 : 0.42 }, uBoost: { value: 0 },
+        uNoiseA: { value: 0 }, uNoiseC: { value: 0 }, uAccA: { value: 0.14 }, uAccC: { value: 0.14 }, uOpA: { value: 1 }, uOpC: { value: 1 },
+        uFloodOp: { value: 1.25 }, uMouse: { value: this.mouse }, uInk: { value: INK }, uSig: { value: SIG },
       },
     });
-    this.points = new THREE.Points(geo, this.pointMat);
-    this.spinner.add(this.points);
+    this.points = new THREE.Points(geo, this.mat);
+    this.points.frustumCulled = false;
+    this.scene.add(this.points);
 
-    // --- graph: threads, nodes, pulses
+    // --- graph overlay (hero sphere and cross-chain ring)
+    this.graphGroup.matrixAutoUpdate = false;
+    this.scene.add(this.graphGroup);
     this.nodePos = this.layouts.sphere.map((p) => [...p] as Vec3);
-    const segs = 22;
     this.threadGeo = new THREE.BufferGeometry();
-    this.threadGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(this.nodePos.length * segs * 2 * 3), 3));
+    this.threadGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(this.nodePos.length * 22 * 2 * 3), 3));
     this.threadMat = new THREE.LineBasicMaterial({ color: "#7d838d", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
     const threads = new THREE.LineSegments(this.threadGeo, this.threadMat);
     threads.frustumCulled = false;
-    this.spinner.add(threads);
+    this.graphGroup.add(threads);
 
     const nn = this.nodePos.length + 1;
     this.nodeGeo = new THREE.BufferGeometry();
@@ -192,7 +222,7 @@ export class Plexus {
     this.nodeMat = this.glowMaterial();
     const nodes = new THREE.Points(this.nodeGeo, this.nodeMat);
     nodes.frustumCulled = false;
-    this.spinner.add(nodes);
+    this.graphGroup.add(nodes);
 
     const np = this.maxPulses * this.trail;
     this.pulseGeo = new THREE.BufferGeometry();
@@ -203,9 +233,8 @@ export class Plexus {
     this.pulseMat = this.glowMaterial();
     const pulses = new THREE.Points(this.pulseGeo, this.pulseMat);
     pulses.frustumCulled = false;
-    this.spinner.add(pulses);
+    this.graphGroup.add(pulses);
 
-    // --- HTML labels for named nodes
     this.labelEls = CHAIN_NODES.map((c) => {
       const el = document.createElement("div");
       el.className = `node-label${c.zero ? " is-zero" : ""}`;
@@ -216,7 +245,7 @@ export class Plexus {
     });
 
     this.resize();
-    this.updateThreads();
+    this.updateThreads(0);
     window.addEventListener("resize", () => this.resize());
     window.addEventListener("pointermove", (e) => {
       if (e.pointerType === "touch") return;
@@ -247,6 +276,35 @@ export class Plexus {
     return f;
   }
 
+  /** The storm: a disk of stardust large enough to cover the viewport at any rotation, at many depths. */
+  private buildStorm() {
+    const r = rng(999);
+    const f = this.aF.array as Float32Array;
+    const tanHalf = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+    for (let i = 0; i < this.n; i++) {
+      const z = -8 + Math.pow(r(), 0.7) * 15.5;
+      const halfH = tanHalf * (11 - z);
+      const R = Math.hypot(halfH, halfH * this.camera.aspect) * 1.08;
+      let x: number, y: number;
+      if (r() < 0.48) {
+        const a = r() * Math.PI * 2;
+        const d = Math.sqrt(r()) * R;
+        x = Math.cos(a) * d;
+        y = Math.sin(a) * d;
+      } else {
+        // a few luminous bands sweeping across the screen
+        const band = Math.floor(r() * 4);
+        const t = r() * 2 - 1;
+        x = t * R;
+        y = Math.sin(t * 2.6 + band * 1.7) * halfH * 0.5 + (band - 1.5) * halfH * 0.32 + (r() - 0.5) * (0.25 + Math.abs(t) * 0.5);
+      }
+      f[i * 3] = x;
+      f[i * 3 + 1] = y;
+      f[i * 3 + 2] = z;
+    }
+    this.aF.needsUpdate = true;
+  }
+
   private isNarrow() {
     return innerWidth / innerHeight < 0.95 || innerWidth < 900;
   }
@@ -260,69 +318,64 @@ export class Plexus {
     this.viewH = 2 * this.camera.position.z * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
     this.viewW = this.viewH * this.camera.aspect;
     const s = Math.min(h / 900, w / 1000) * (this.isNarrow() ? 1.15 : 1);
-    this.pointMat.uniforms.uSize!.value = 3.2 * Math.max(0.7, s);
+    this.mat.uniforms.uSize!.value = 3.2 * Math.max(0.7, s);
     for (const m of [this.nodeMat, this.pulseMat]) m.uniforms.uScale!.value = Math.max(0.7, s);
-    if (this.chapter >= 0) this.applyView(this.chapter, 0);
+    this.buildStorm();
   }
 
-  private applyView(i: number, duration: number) {
-    const v = VIEWS[i]!;
+  /** World transform of a view at the current time (spin included). */
+  private viewMatrix(i: number, out: THREE.Matrix4) {
+    const v = this.views[i]!;
     const narrow = this.isNarrow();
+    const full = v.scale > 1.3;
     const fit = Math.min(1, (this.viewW / 15.5) * (narrow ? 1.5 : 1));
-    const target = {
-      x: narrow ? 0 : v.x * this.viewW,
-      y: v.y * this.viewH + (narrow ? 0.4 : 0),
-      s: v.scale * fit * (narrow ? 0.7 : 1),
-    };
-    const ease = "power3.inOut";
-    gsap.to(this.root.position, { x: target.x, y: target.y, duration, ease });
-    gsap.to(this.root.scale, { x: target.s, y: target.s, z: target.s, duration, ease });
-    gsap.to(this.root.rotation, { x: v.rotX, duration, ease });
-    gsap.to(this, { spinSpeed: this.opts.reduced ? 0 : v.spin, duration, ease });
-    gsap.to(this.pointMat.uniforms.uOpacity!, { value: v.opacity * (narrow ? 0.62 : 1), duration, ease });
-    gsap.to(this.pointMat.uniforms.uNoise!, { value: v.noise, duration, ease });
-    gsap.to(this.pointMat.uniforms.uAccent!, { value: ACCENT_RATIO[i], duration, ease });
-    gsap.to(this, { labelFactor: narrow ? 0 : i === 5 ? 0.28 : 1, duration, ease });
-    gsap.to(this.graph, { opacity: v.graph ? 1 : 0, duration: duration * (v.graph ? 1.2 : 0.5), ease });
-    if (v.graph) gsap.to(this.graph, { layout: v.graph === 2 ? 1 : 0, duration, ease, onUpdate: () => this.updateThreads() });
-    // rotY is an offset on top of the running spin: ease the accumulated angle toward it
-    const base = Math.round(this.spinAngle / (Math.PI * 2)) * Math.PI * 2;
-    gsap.to(this, { spinAngle: v.spin ? this.spinAngle : base + v.rotY, duration, ease });
+    const s = v.scale * fit * (narrow ? (full ? 0.9 : 0.7) : 1);
+    const { p, q, e } = this.tmp;
+    p.set(narrow ? 0 : v.x * this.viewW, v.y * this.viewH + (narrow && !full ? 0.4 : 0), 0);
+    q.setFromEuler(e.set(v.rotX, v.rotY + this.time * (this.opts.reduced ? 0 : v.spin), 0, "XYZ"));
+    out.compose(p, q, this.tmp.s.set(s, s, s));
   }
 
-  /** Morph to chapter i. */
-  setChapter(i: number) {
-    if (i === this.chapter) return;
-    const first = this.chapter < 0;
-    this.chapter = i;
-    if (!first) {
-      // freeze the current (possibly mid-transition) positions as the new origin
-      const mix = this.pointMat.uniforms.uMix!.value as number;
-      for (let k = 0; k < this.n; k++) {
-        let d = Math.min(1, Math.max(0, (mix - this.seeds[k]! * 0.35) / 0.65));
-        d = d * d * (3 - 2 * d);
-        for (let c = 0; c < 3; c++) this.from[k * 3 + c] = this.from[k * 3 + c]! + (this.to[k * 3 + c]! - this.from[k * 3 + c]!) * d;
-      }
-      this.to.set(this.formation(i));
-      const g = this.points.geometry;
-      (g.getAttribute("aFrom") as THREE.BufferAttribute).needsUpdate = true;
-      (g.getAttribute("aTo") as THREE.BufferAttribute).needsUpdate = true;
-      gsap.killTweensOf(this.pointMat.uniforms.uMix!);
-      this.pointMat.uniforms.uMix!.value = 0;
-      gsap.to(this.pointMat.uniforms.uMix!, { value: 1, duration: this.opts.reduced ? 0 : 2.4, ease: "power2.inOut" });
+  /**
+   * Scroll-driven morph from view a to view c. t = 0 shows a, t = 0.5 is the full-screen storm, t = 1 shows c.
+   */
+  setTransition(a: number, c: number, t: number) {
+    if (this.opts.reduced) t = t < 0.5 ? 0 : 1;
+    if (a !== this.pair[0] || c !== this.pair[1]) {
+      this.pair = [a, c];
+      (this.aA.array as Float32Array).set(this.formation(a));
+      (this.aC.array as Float32Array).set(this.formation(c));
+      this.aA.needsUpdate = this.aC.needsUpdate = true;
+      const u = this.mat.uniforms;
+      const va = this.views[a]!;
+      const vc = this.views[c]!;
+      const narrowDim = this.isNarrow() ? 0.62 : 1;
+      u.uNoiseA!.value = va.noise;
+      u.uNoiseC!.value = vc.noise;
+      u.uAccA!.value = ACCENT_RATIO[a];
+      u.uAccC!.value = ACCENT_RATIO[c];
+      u.uOpA!.value = va.opacity * narrowDim;
+      u.uOpC!.value = vc.opacity * narrowDim;
+      this.tCur = t;
     }
-    this.applyView(i, first ? 0 : 1.8);
+    this.tTarget = t;
   }
 
-  /** Play the opening assembly from scattered stars into the plexus. */
+  /** Hold a single view (sub-pages). */
+  setStatic(i: number) {
+    this.setTransition(i, i, 0);
+  }
+
+  /** Opening: the storm condenses into the first view. */
   intro() {
-    this.pointMat.uniforms.uMix!.value = 0;
-    gsap.to(this.pointMat.uniforms.uMix!, { value: 1, duration: this.opts.reduced ? 0 : 3.2, ease: "power3.out" });
+    if (this.opts.reduced) return;
+    this.mat.uniforms.uIntro!.value = 0;
+    gsap.to(this.mat.uniforms.uIntro!, { value: 1, duration: 3.4, ease: "power2.out" });
   }
 
   /** Scroll velocity briefly agitates the field. */
   setVelocity(v: number) {
-    this.velocityNoise = Math.min(0.12, Math.abs(v) * 0.004);
+    this.boost = Math.min(0.12, Math.abs(v) * 0.004);
   }
 
   private nodeIndex(chain: string): number {
@@ -335,22 +388,16 @@ export class Plexus {
 
   /** Send a light pulse from one chain to another through the Plexa hub. */
   pulse(from: string, to: string, delivered: boolean) {
+    if (this.graphOpacity < 0.02) return;
     if (this.pulses.length >= this.maxPulses) this.pulses.shift();
-    this.pulses.push({
-      a: this.nodeIndex(from),
-      b: this.nodeIndex(to),
-      t0: this.elapsed,
-      dur: 2.6 + Math.random() * 1.2,
-      color: delivered ? OK : SIG,
-    });
+    this.pulses.push({ a: this.nodeIndex(from), b: this.nodeIndex(to), t0: this.time, dur: 2.6 + Math.random() * 1.2, color: delivered ? OK : SIG });
   }
 
-  private thread(i: number, s: number, out: Vec3): Vec3 {
+  private thread(i: number, s: number, out: Vec3, layout: number): Vec3 {
     const p = this.nodePos[i]!;
     const cs = bow(p);
     const cr: Vec3 = [p[0] * 0.5, p[1] * 0.5 + 0.6, p[2] * 0.5];
-    const t = this.graph.layout;
-    const c: Vec3 = [cs[0] + (cr[0] - cs[0]) * t, cs[1] + (cr[1] - cs[1]) * t, cs[2] + (cr[2] - cs[2]) * t];
+    const c: Vec3 = [cs[0] + (cr[0] - cs[0]) * layout, cs[1] + (cr[1] - cs[1]) * layout, cs[2] + (cr[2] - cs[2]) * layout];
     const u = 1 - s;
     out[0] = 2 * u * s * c[0] + s * s * p[0];
     out[1] = 2 * u * s * c[1] + s * s * p[1];
@@ -358,24 +405,23 @@ export class Plexus {
     return out;
   }
 
-  private updateThreads() {
-    const t = this.graph.layout;
+  private layout = 0;
+  private updateThreads(layout: number) {
+    this.layout = layout;
     const { sphere, ring } = this.layouts;
     for (let i = 0; i < this.nodePos.length; i++)
-      for (let c = 0; c < 3; c++) this.nodePos[i]![c] = sphere[i]![c]! + (ring[i]![c]! - sphere[i]![c]!) * t;
+      for (let c = 0; c < 3; c++) this.nodePos[i]![c] = sphere[i]![c]! + (ring[i]![c]! - sphere[i]![c]!) * layout;
     const pos = this.threadGeo.getAttribute("position") as THREE.BufferAttribute;
-    const segs = 22;
     const a: Vec3 = [0, 0, 0];
     const b: Vec3 = [0, 0, 0];
     let k = 0;
-    for (let i = 0; i < this.nodePos.length; i++) {
-      for (let s = 0; s < segs; s++) {
-        this.thread(i, s / segs, a);
-        this.thread(i, (s + 1) / segs, b);
+    for (let i = 0; i < this.nodePos.length; i++)
+      for (let s = 0; s < 22; s++) {
+        this.thread(i, s / 22, a, layout);
+        this.thread(i, (s + 1) / 22, b, layout);
         pos.setXYZ(k++, a[0], a[1], a[2]);
         pos.setXYZ(k++, b[0], b[1], b[2]);
       }
-    }
     pos.needsUpdate = true;
     const np = this.nodeGeo.getAttribute("position") as THREE.BufferAttribute;
     this.nodePos.forEach((p, i) => np.setXYZ(i, p[0], p[1], p[2]));
@@ -387,8 +433,24 @@ export class Plexus {
     const ray = new THREE.Raycaster();
     ray.setFromCamera(this.pointerNdc, this.camera);
     const hit = new THREE.Vector3();
-    ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hit);
-    this.mouseTarget.copy(hit);
+    if (ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hit)) this.mouseTarget.copy(hit);
+  }
+
+  private updateGraph() {
+    const [a, c] = this.pair;
+    const t = this.tCur;
+    const wA = this.views[a]?.graph ? 1 - ease(t * 2) : 0;
+    const wC = this.views[c]?.graph ? ease(t * 2 - 1) : 0;
+    const useA = wA >= wC;
+    const view = useA ? a : c;
+    this.graphOpacity = Math.max(wA, wC) * (this.opts.reduced ? 1 : Math.min(1, this.mat.uniforms.uIntro!.value * 1.5));
+    if (this.graphOpacity < 0.01) return;
+    this.graphGroup.matrix.copy(useA ? this.MA : this.MC);
+    this.graphGroup.matrixWorldNeedsUpdate = true;
+    const layout = this.views[view]!.graph === 2 ? 1 : 0;
+    if (view !== this.graphView || layout !== this.layout) this.updateThreads(layout);
+    this.graphView = view;
+    this.labelFactor = this.isNarrow() ? 0 : this.views[view]!.labels;
   }
 
   private updatePulses(time: number) {
@@ -403,8 +465,8 @@ export class Plexus {
       const head = (time - q.t0) / q.dur;
       for (let j = 0; j < this.trail; j++) {
         const t = Math.max(0, head - j * 0.018);
-        if (t < 0.5) this.thread(q.a, 1 - t * 2, p);
-        else this.thread(q.b, t * 2 - 1, p);
+        if (t < 0.5) this.thread(q.a, 1 - t * 2, p, this.layout);
+        else this.thread(q.b, t * 2 - 1, p, this.layout);
         pos.setXYZ(k, p[0], p[1], p[2]);
         size.setX(k, j === 0 ? 20 : 11 - j);
         col.setXYZ(k, q.color.r, q.color.g, q.color.b);
@@ -417,23 +479,20 @@ export class Plexus {
   }
 
   private updateLabels() {
-    const o = this.graph.opacity * this.labelFactor;
+    const o = this.graphOpacity * this.labelFactor;
     const v = new THREE.Vector3();
-    const camSpace = new THREE.Vector3();
+    const cam = new THREE.Vector3();
     this.labelEls.forEach((el, i) => {
       if (o < 0.02) {
         if (el.style.opacity !== "0") el.style.opacity = "0";
         return;
       }
       const p = this.nodePos[i]!;
-      v.set(p[0], p[1], p[2]);
-      this.spinner.localToWorld(v);
-      camSpace.copy(v).applyMatrix4(this.camera.matrixWorldInverse);
+      v.set(p[0], p[1], p[2]).applyMatrix4(this.graphGroup.matrix);
+      cam.copy(v).applyMatrix4(this.camera.matrixWorldInverse);
       v.project(this.camera);
-      const x = (v.x * 0.5 + 0.5) * innerWidth;
-      const y = (-v.y * 0.5 + 0.5) * innerHeight;
-      const depth = THREE.MathUtils.clamp((-camSpace.z - 8) / 6, 0, 1);
-      el.style.transform = `translate3d(${x + 14}px, ${y - 8}px, 0)`;
+      const depth = THREE.MathUtils.clamp((-cam.z - 8) / 6, 0, 1);
+      el.style.transform = `translate3d(${(v.x * 0.5 + 0.5) * innerWidth + 14}px, ${(-v.y * 0.5 + 0.5) * innerHeight - 8}px, 0)`;
       el.style.opacity = String(o * (1 - depth * 0.85));
     });
   }
@@ -443,24 +502,28 @@ export class Plexus {
     const now = performance.now();
     const dt = Math.min((now - this.last) / 1000, 0.05);
     this.last = now;
-    this.elapsed += dt;
-    const time = this.elapsed;
-    this.spinAngle += this.spinSpeed * dt;
-    this.spinner.rotation.y = this.spinAngle;
+    this.time += dt;
+    // ease the scrubbed progress so the morph glides even on coarse wheels
+    this.tCur += (this.tTarget - this.tCur) * Math.min(1, dt * 7);
+    const u = this.mat.uniforms;
+    u.uT!.value = this.tCur;
+    u.uTime!.value = this.time;
+    this.viewMatrix(Math.max(0, this.pair[0]), this.MA);
+    this.viewMatrix(Math.max(0, this.pair[1]), this.MC);
     this.mouse.lerp(this.mouseTarget, 0.08);
-    const local = this.spinner.worldToLocal(this.mouse.clone());
-    this.pointMat.uniforms.uMouse!.value = local;
-    this.pointMat.uniforms.uTime!.value = time;
-    this.velocityNoise *= 0.92;
-    const baseNoise = VIEWS[Math.max(0, this.chapter)]!.noise;
-    this.pointMat.uniforms.uNoise!.value += (baseNoise + this.velocityNoise - this.pointMat.uniforms.uNoise!.value) * 0.1;
+    this.boost *= 0.92;
+    u.uBoost!.value = this.boost;
+    // a gentle push-in while the storm fills the screen
+    const storm = Math.sin(Math.PI * Math.min(1, Math.max(0, this.tCur)));
     this.camera.position.x += (this.pointerNdc.x * 0.35 - this.camera.position.x) * 0.03;
     this.camera.position.y += (this.pointerNdc.y * 0.22 - this.camera.position.y) * 0.03;
+    this.camera.position.z = 11 - storm * 1.1;
     this.camera.lookAt(0, 0, 0);
-    this.threadMat.opacity = this.graph.opacity * 0.22;
-    this.nodeMat.uniforms.uOpacity!.value = this.graph.opacity;
-    this.pulseMat.uniforms.uOpacity!.value = this.graph.opacity;
-    if (this.graph.opacity > 0.01) this.updatePulses(time);
+    this.updateGraph();
+    this.threadMat.opacity = this.graphOpacity * 0.22;
+    this.nodeMat.uniforms.uOpacity!.value = this.graphOpacity;
+    this.pulseMat.uniforms.uOpacity!.value = this.graphOpacity;
+    if (this.graphOpacity > 0.01) this.updatePulses(this.time);
     this.renderer.render(this.scene, this.camera);
     this.updateLabels();
     requestAnimationFrame(this.frame);

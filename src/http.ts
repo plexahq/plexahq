@@ -40,7 +40,7 @@ const httpServer = createHttpServer(async (req, res) => {
     const { pathname } = new URL(req.url ?? "/", "http://localhost");
     let response: Response;
     if (pathname === "/health") response = handleHealth();
-    else if (pathname === "/api/live") response = await handleLive();
+    else if (pathname === "/api/live") response = await handleLive(new URL(req.url ?? "/", "http://localhost"));
     else if (pathname === "/mcp") response = await handleMcpRequest(toRequest(req));
     else {
       response = new Response(JSON.stringify({ error: "Not found. The MCP endpoint is /mcp" }), {

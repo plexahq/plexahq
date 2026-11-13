@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact · Plexa</title>
+  <meta name="description" content="Get in touch with Plexa about getting started, integrations, partnerships, security or press.">
+  <meta name="theme-color" content="#0A0B0E">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body class="page" data-page="contact" data-scene="10">
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="node-labels" id="node-labels" aria-hidden="true"></div>
+  <!--#include nav-->
+
+  <main>
+    <section class="page-hero">
+      <div class="wrap">
+        <p class="kicker" data-reveal>Company · Contact</p>
+        <h1 class="display page-title" data-split>Let's <em>talk.</em></h1>
+        <p class="lede" data-reveal>Questions about getting started, integrations, partnerships, security or press. A short note on who you are and what you need helps us reply sooner.</p>
+      </div>
+    </section>
+
+    <section class="block tight">
+      <div class="wrap split contact">
+        <div class="channels">
+          <div class="channel" data-reveal><span class="kpi-k">GitHub</span><a class="ch-v" href="https://github.com/plexahq/plexahq/issues" target="_blank" rel="noopener">plexahq/plexahq ↗</a><p>Bugs, feature requests and questions. Public, and the fastest way to reach the team.</p></div>
+          <div class="channel" data-reveal><span class="kpi-k">Security</span><a class="ch-v" href="https://github.com/plexahq/plexahq/security" target="_blank" rel="noopener">Report privately ↗</a><p>Found a vulnerability? Please report it privately through GitHub's security tab instead of a public issue.</p></div>
+          <div class="channel" data-reveal><span class="kpi-k">Docs</span><a class="ch-v" href="/docs">Documentation →</a><p>Most setup questions are answered in the quickstart and the tool reference.</p></div>
+        </div>
+        <form class="panel form" id="contact-form" data-reveal autocomplete="on">
+          <div class="demo-head"><span class="demo-title">Message Plexa</span><span>via GitHub</span></div>
+          <div class="form-body">
+            <label>Name<input name="name" required maxlength="80"></label>
+            <label>Organisation <small>optional</small><input name="org" maxlength="80"></label>
+            <label>Topic<select name="topic"><option>Getting started</option><option>Integration</option><option>Partnership</option><option>Press</option><option>Feedback</option><option>Other</option></select></label>
+            <label>Message<textarea name="message" rows="6" required maxlength="4000"></textarea></label>
+            <p class="form-note">Sending opens a pre-filled GitHub issue in a new tab. Issues are public, so please don't include anything private. For security reports, use the private channel on the left.</p>
+            <button class="btn btn-sig" type="submit">Open as GitHub issue <span aria-hidden="true">↗</span></button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!--#include footer-->
+  <script type="module" src="/src/page.ts"></script>
+</body>
+</html>

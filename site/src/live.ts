@@ -47,6 +47,8 @@ export class LiveFeed {
   last: LiveSnapshot | null = null;
   private timer = 0;
 
+  constructor(private url = "/api/live") {}
+
   on(fn: Listener) {
     this.listeners.push(fn);
     if (this.last) fn(this.last, []);
@@ -66,7 +68,7 @@ export class LiveFeed {
 
   private async poll() {
     try {
-      const res = await fetch("/api/live", { cache: "no-store" });
+      const res = await fetch(this.url, { cache: "no-store" });
       if (!res.ok) return;
       const snap = (await res.json()) as LiveSnapshot;
       const fresh = snap.messages.filter((m) => m.sourceTx && !this.seen.has(m.sourceTx + m.status));

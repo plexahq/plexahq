@@ -101,7 +101,7 @@ LayerZero's metadata API already lists the zones as `zeroatlas` and `zerointerop
 
 ## Website
 
-The marketing site lives in `site/` (Vite + Three.js + GSAP + Lenis). It is powered by Plexa itself: the live demos call `/mcp`, and the live feed reads `GET /api/live` (latest LayerZero messages and block heights, cached at the CDN for 10 seconds).
+The website lives in `site/` (Vite + Three.js + GSAP + Lenis): the home page plus Product, Docs, Stats, Company and Contact pages. Shared nav and footer are in `site/partials/`. It is powered by Plexa itself: the live demos call `/mcp`, and the live feed reads `GET /api/live` (latest LayerZero messages and block heights, `?messages=1…50`, cached at the CDN for 10 seconds).
 
 ```bash
 npm run dev:http   # API on :3000
