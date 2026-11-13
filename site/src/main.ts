@@ -38,7 +38,7 @@ whenVisible($("timeline"), () => {
   };
   pick();
   if (!autoTracked) feed.on(() => pick());
-});
+}, "top bottom");
 
 // Loader: count up while the 3D scene loads, then assemble the plexus.
 const num = $("loader-num");
