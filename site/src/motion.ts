@@ -97,14 +97,25 @@ export function initMotion(reduced: boolean, onVelocity: (v: number) => void): C
     });
   }
 
-  // nav hides on the way down, returns on the way up
+  // Nav hides once you scroll down and stays hidden, even when scrolling slows or stops.
+  // It only comes back after a deliberate scroll up (wheel, keys, touch) or near the top of the page.
   const nav = document.getElementById("nav")!;
-  let lastY = 0;
+  let lastY = window.scrollY;
+  let upRun = 0;
   const onScroll = () => {
     const y = window.scrollY;
-    nav.classList.toggle("is-hidden", y > 200 && y > lastY + 2);
-    if (y < lastY - 2 || y < 200) nav.classList.remove("is-hidden");
+    const dy = y - lastY;
     lastY = y;
+    if (y < 120) {
+      upRun = 0;
+      nav.classList.remove("is-hidden");
+    } else if (dy > 0) {
+      upRun = 0;
+      if (y > 200) nav.classList.add("is-hidden");
+    } else if (dy < 0) {
+      upRun -= dy;
+      if (upRun > 24) nav.classList.remove("is-hidden");
+    }
   };
   window.addEventListener("scroll", onScroll, { passive: true });
 
