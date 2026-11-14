@@ -472,6 +472,16 @@ export class Plexus {
     });
   }
 
+  /** Scripted morph from formation a through the storm into c (the X video drives the scene with these). */
+  morph(a: number, c: number, duration = 1.4): Promise<void> {
+    this.scripted = true;
+    this.applyPair(a, c);
+    this.tCur = 0;
+    return new Promise((done) => {
+      gsap.to(this, { tCur: 1, duration, ease: "power2.inOut", onComplete: () => done() });
+    });
+  }
+
   /** Spin the scene into a full-screen vortex (true), or let it settle back to the page (false). */
   vortex(on: boolean) {
     if (this.opts.reduced) return;

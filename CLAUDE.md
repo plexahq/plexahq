@@ -19,6 +19,7 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
   - `sourcify.ts`, `abi.ts`.
   - `live.ts`: snapshot behind `/api/live`.
   - `web.ts`: shared Request→Response handlers for `/mcp`, `/health` and `/api/live?messages=1..50`.
+  - `/mcp` is closed until Zero mainnet (owner's decision): only requests whose `Origin` is the site itself (or localhost) are served, so the site's live demos keep working; AI clients get "Plexa opens at Zero mainnet". Set `PLEXA_MCP_OPEN=1` in Vercel at launch to open it.
   - `http.ts`: Node server. `stdio.ts`: local entry.
 - `api/*.js`: Vercel functions that import `../dist/web.js`.
   - `api/contact.js`: contact form. Saves each message as private JSON in Vercel Blob store `plexa-contact` (`contact/YYYY-MM-DD/...`), via `BLOB_READ_WRITE_TOKEN`. Read them in Vercel → Storage.
@@ -47,6 +48,10 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
 - Design tokens:
   - Colours: background `#0A0B0E`, signal orange `#FF5B1F`, verified teal `#2FD3B5`.
   - Fonts: Familjen Grotesk and Fragment Mono, via @fontsource.
+
+## X launch video
+- `site/film.html` + `src/film.ts`: the video as a page (dev server only, not in the site build). A fixed GSAP timeline drives the scene (`Plexus.prepareIntro/assemble/open/morph`) and the captions: logo → network → LayerZero ring → verifier shield → candles → Zero orbits → logo.
+- `scripts/film.cjs out W H [--stills]`: renders it frame by frame under Playwright's fake clock (`clock.install` then `pauseAt`, one `runFor` per frame) and encodes MP4 with ffmpeg. Needs the dev server on :5173 and the API on :3000. 16:9 and 1:1 versions so far; add the X handle to the end card once it exists.
 
 ## Commands
 - `npm run build`: tsc builds the server into `dist/`, then vite builds the site into `site-dist/`.

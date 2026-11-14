@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Plexa · film</title>
+  <!-- Renders the X launch video frame by frame (see scripts/film.cjs). Dev server only; not part of the site build. -->
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #0a0b0e; }
+    .film-vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(90% 80% at 50% 45%, transparent 45%, rgba(10, 11, 14, 0.85) 100%); }
+    .film-brand { position: fixed; top: 4.2vh; left: 4.2vh; z-index: 4; display: flex; align-items: center; gap: 1.2vh; font-family: "Familjen Grotesk", sans-serif; font-weight: 600; font-size: 2.6vh; color: #ecebe4; opacity: 0; }
+    .film-brand svg { width: 3.2vh; height: 3.2vh; }
+    .film-date { position: fixed; top: 4.6vh; right: 4.2vh; z-index: 4; font-family: "Fragment Mono", monospace; font-size: 1.5vh; letter-spacing: 0.18em; text-transform: uppercase; color: #9a9da4; opacity: 0; }
+    .film-date b { color: #ff5b1f; font-weight: 400; }
+    .film-mark { position: fixed; left: 0; right: 0; top: 76vh; z-index: 4; text-align: center; font-family: "Familjen Grotesk", sans-serif; font-weight: 600; font-size: 3.4vh; letter-spacing: 0.42em; padding-left: 0.42em; color: #ecebe4; opacity: 0; }
+    .film-cap { position: fixed; left: 6vw; right: 6vw; bottom: 9vh; z-index: 4; text-align: center; }
+    .fc-k { font-family: "Fragment Mono", monospace; font-size: 1.7vh; letter-spacing: 0.24em; text-transform: uppercase; color: #ff5b1f; margin: 0 0 2vh; opacity: 0; }
+    .fc-l { font-family: "Familjen Grotesk", sans-serif; font-weight: 600; font-size: 8.4vh; line-height: 1.02; letter-spacing: -0.035em; color: #ecebe4; margin: 0; text-shadow: 0 0 30px rgba(10, 11, 14, 0.9); }
+    .fc-l.sig { color: #ff5b1f; }
+    .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+    .w > span { display: inline-block; transform: translateY(110%); }
+    .film-end { position: fixed; left: 0; right: 0; bottom: 10vh; z-index: 4; text-align: center; }
+    .fe-name { font-family: "Familjen Grotesk", sans-serif; font-weight: 600; font-size: 13vh; letter-spacing: -0.04em; line-height: 1; color: #ecebe4; margin: 0; }
+    .fe-line { font-family: "Familjen Grotesk", sans-serif; font-size: 3.4vh; color: #c9cbd0; margin: 1.6vh 0 0; opacity: 0; }
+    .fe-line em { font-style: normal; color: #ff5b1f; }
+    .fe-date { font-family: "Fragment Mono", monospace; font-size: 1.8vh; letter-spacing: 0.24em; text-transform: uppercase; color: #9a9da4; margin: 3vh 0 0; opacity: 0; }
+    .fe-date b { color: #ff5b1f; font-weight: 400; }
+  </style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <div class="film-vignette"></div>
+  <div class="node-labels" id="node-labels"></div>
+  <div class="film-brand" id="brand"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="3.4" fill="#FF5B1F"/><g stroke="currentColor" stroke-width="1.4" fill="none"><path d="M13 9.6V3M13 16.4V23M9.9 11.2 4.3 8M16.1 14.8 21.7 18M9.9 14.8 4.3 18M16.1 11.2 21.7 8"/></g><g fill="currentColor"><circle cx="13" cy="3" r="1.8"/><circle cx="13" cy="23" r="1.8"/><circle cx="4.3" cy="8" r="1.8"/><circle cx="21.7" cy="18" r="1.8"/><circle cx="4.3" cy="18" r="1.8"/><circle cx="21.7" cy="8" r="1.8"/></g></svg>Plexa</div>
+  <div class="film-date" id="date">Zero mainnet · <b>Nov 30</b></div>
+  <div class="film-mark" id="mark">PLEXA</div>
+  <div class="film-end" id="end">
+    <p class="fe-name" id="end-name"></p>
+    <p class="fe-line" id="end-line">Your AI, <em>fluent in the chain.</em></p>
+    <p class="fe-date" id="end-date">Opens at Zero mainnet · <b>November 30</b></p>
+  </div>
+  <script type="module" src="/src/film.ts"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { handleHealth, handleMcpRequest } from "../src/web.js";
 
 const MCP_HEADERS = {
@@ -12,6 +12,13 @@ function post(body: unknown): Request {
 }
 
 describe("handleMcpRequest", () => {
+  beforeAll(() => {
+    process.env.PLEXA_MCP_OPEN = "1";
+  });
+  afterAll(() => {
+    delete process.env.PLEXA_MCP_OPEN;
+  });
+
   it("initializes and lists tools statelessly", async () => {
     const init = await handleMcpRequest(
       post({
@@ -54,5 +61,29 @@ describe("handleMcpRequest", () => {
 describe("handleHealth", () => {
   it("reports ok", async () => {
     expect(await handleHealth().json()).toMatchObject({ ok: true, name: "plexa" });
+  });
+});
+
+describe("before launch (endpoint closed)", () => {
+  const call = (headers: Record<string, string>) =>
+    handleMcpRequest(
+      new Request("https://plexahq.vercel.app/mcp", {
+        method: "POST",
+        headers: { ...MCP_HEADERS, ...headers },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+      }),
+    );
+
+  it("tells AI clients when it opens", async () => {
+    const res = await call({});
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as { error: { message: string } }).error.message).toMatch(/Zero mainnet/);
+    expect((await call({ origin: "https://example.com" })).status).toBe(403);
+    expect((await handleMcpRequest(new Request("https://plexahq.vercel.app/mcp"))).status).toBe(403);
+  });
+
+  it("still serves the website's own demos", async () => {
+    expect((await call({ origin: "https://plexahq.vercel.app" })).status).toBe(200);
+    expect((await call({ origin: "http://localhost:5173" })).status).toBe(200);
   });
 });

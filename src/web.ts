@@ -42,6 +42,31 @@ function withCors(res: Response): Response {
   return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
 }
 
+/**
+ * Until Zero mainnet the MCP endpoint only serves Plexa's own website (its live demos);
+ * AI clients get a short "opens at Zero mainnet" answer. PLEXA_MCP_OPEN=1 opens it to everyone.
+ * The check is the browser's Origin header, so it keeps the endpoint out of AI clients,
+ * not out of someone determined to fake a header: there is nothing private behind it.
+ */
+const LAUNCH_NOTE = "Plexa opens at Zero mainnet on November 30, 2026. Follow the launch at plexahq.vercel.app.";
+
+export function mcpIsOpen(): boolean {
+  return process.env.PLEXA_MCP_OPEN === "1";
+}
+
+export function fromOwnSite(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+  try {
+    const o = new URL(origin);
+    if (o.hostname === "localhost" || o.hostname === "127.0.0.1") return true;
+    const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? new URL(request.url).host;
+    return o.host === host;
+  } catch {
+    return false;
+  }
+}
+
 export function handleHealth(): Response {
   return json(200, { ok: true, name: "plexa", version: VERSION });
 }
@@ -66,7 +91,9 @@ export async function handleLive(url?: URL): Promise<Response> {
 
 export async function handleMcpRequest(request: Request): Promise<Response> {
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS_HEADERS });
+  const open = mcpIsOpen() || fromOwnSite(request);
   if (request.method === "GET") {
+    if (!open) return json(403, { name: "plexa", version: VERSION, message: LAUNCH_NOTE });
     // A plain GET (e.g. from a browser) gets a short pointer instead of an SSE stream.
     return json(405, {
       name: "plexa",
@@ -75,6 +102,7 @@ export async function handleMcpRequest(request: Request): Promise<Response> {
     });
   }
   if (request.method !== "POST") return rpcError(405, -32000, "Method not allowed");
+  if (!open) return rpcError(403, -32001, LAUNCH_NOTE);
 
   const length = Number(request.headers.get("content-length") ?? 0);
   if (length > MAX_BODY_BYTES) return rpcError(413, -32600, "Request body too large");
