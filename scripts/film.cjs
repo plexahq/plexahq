@@ -49,7 +49,10 @@ const URL = process.env.FILM_URL ?? "http://127.0.0.1:5173/film.html";
       await page.screenshot({ path: path.join(out, `still-${String(at).replace(".", "_")}.jpg`), type: "jpeg", quality: 90 });
     }
   } else {
-    const frames = Math.ceil(duration * FPS);
+    // --clip=FROM:TO renders only that window (previews)
+    const clip = mode?.startsWith("--clip=") ? mode.slice(7).split(":").map(Number) : null;
+    if (clip) await page.clock.runFor(Math.round(clip[0] * 1000));
+    const frames = Math.ceil((clip ? clip[1] - clip[0] : duration) * FPS);
     const t0 = Date.now();
     for (let f = 0; f < frames; f++) {
       await page.clock.runFor(Math.round(((f + 1) * 1000) / FPS) - Math.round((f * 1000) / FPS));

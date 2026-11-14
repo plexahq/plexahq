@@ -35,7 +35,7 @@ const DIM = new THREE.Color("#5A5F68");
 const pointsVert = /* glsl */ `
   attribute vec3 aA; attribute vec3 aC; attribute vec3 aF; attribute float aSeed;
   uniform mat4 uMA, uMC;
-  uniform float uT, uIntro, uTime, uSize, uPixelRatio, uMouseStrength, uBoost, uSpin, uPinch;
+  uniform float uT, uIntro, uTime, uSize, uPixelRatio, uMouseStrength, uBoost, uSpin, uPinch, uDirect;
   uniform float uNoiseA, uNoiseC, uAccA, uAccC, uOpA, uOpC, uFloodOp, uMaskA, uMaskC, uMaskStrength;
   uniform vec3 uMouse;
   varying float vSeed; varying float vAlpha; varying float vAccent;
@@ -67,6 +67,12 @@ const pointsVert = /* glsl */ `
     float t1 = ease((uT * 2.0 - s * 0.4) / 0.6);
     float t2 = ease(((uT - 0.5) * 2.0 - s * 0.4) / 0.6);
     vec3 p = mix(mix(pa, pf, t1), pc, t2);
+    // direct morph (no storm): each particle arcs from its place in a to its place in c
+    float td = ease(uT * 1.3 - s * 0.3);
+    vec3 mid = (pa + pc) * 0.5 + vec3(sin(s * 41.0), cos(s * 29.0), sin(s * 17.0) * 0.6) * (0.9 + 1.4 * fract(s * 13.7));
+    p = mix(p, mix(mix(pa, mid, td), mix(mid, pc, td), td), uDirect);
+    t2 = mix(t2, td, uDirect);
+    t1 *= 1.0 - uDirect;
     // opening: the storm condenses into the first formation
     float ti = ease((uIntro * 1.4 - s * 0.4));
     p = mix(storm(aF * 1.25, s), p, ti);
@@ -85,6 +91,7 @@ const pointsVert = /* glsl */ `
     float acc = mix(mix(uAccA, uAccC, t2), 0.26, flood);
     vAccent = step(1.0 - acc, fract(s * 7.13));
     vAlpha = smoothstep(28.0, 6.5, -mv.z) * mix(mix(uOpA, uOpC, t2), uFloodOp, flood) * (1.0 + pin * 1.4);
+    vAlpha *= smoothstep(0.25, 1.4, -mv.z); // fade what brushes past the camera
     vec2 ndc = gl_Position.xy / gl_Position.w;
     vAlpha *= 1.0 - uMaskStrength * mix(maskOf(uMaskA, ndc), maskOf(uMaskC, ndc), t2);
   }`;
@@ -148,6 +155,8 @@ export class Plexus {
   private spinAngle = 0;
   /** How far the camera pushes into the storm (the video dives deeper than the site). */
   push = 1.1;
+  /** Scripted camera distance (the video's fly-through); null follows the scene. */
+  camZ: number | null = null;
   private target = { a: 0, c: 1, t: 0 };
   private graphGroup = new THREE.Group();
   private graphView = -1;
@@ -207,7 +216,7 @@ export class Plexus {
       uniforms: {
         uMA: { value: this.MA }, uMC: { value: this.MC },
         uT: { value: 0 }, uIntro: { value: opts.reduced ? 1 : 0 }, uTime: { value: 0 }, uSize: { value: 3.2 },
-        uPixelRatio: { value: this.renderer.getPixelRatio() }, uMouseStrength: { value: opts.reduced ? 0 : 0.42 }, uBoost: { value: 0 }, uSpin: { value: 0 }, uPinch: { value: 0 },
+        uPixelRatio: { value: this.renderer.getPixelRatio() }, uMouseStrength: { value: opts.reduced ? 0 : 0.42 }, uBoost: { value: 0 }, uSpin: { value: 0 }, uPinch: { value: 0 }, uDirect: { value: 0 },
         uNoiseA: { value: 0 }, uNoiseC: { value: 0 }, uAccA: { value: 0.14 }, uAccC: { value: 0.14 }, uOpA: { value: 1 }, uOpC: { value: 1 },
         uFloodOp: { value: 0.95 }, uMaskA: { value: 1 }, uMaskC: { value: 1 }, uMaskStrength: { value: 0.8 }, uMouse: { value: this.mouse }, uInk: { value: INK }, uSig: { value: SIG },
       },
@@ -492,6 +501,11 @@ export class Plexus {
     this.mat.uniforms.uPinch!.value = v;
   }
 
+  /** 0: morphs pass through the storm; 1: particles arc straight from one formation to the next. */
+  setDirect(v: number) {
+    this.mat.uniforms.uDirect!.value = v;
+  }
+
   /** Scripted: jump straight to pair (a, c) at t, e.g. into the storm while everything is pinched. */
   jump(a: number, c: number, t: number) {
     this.scripted = true;
@@ -671,7 +685,7 @@ export class Plexus {
     const storm = Math.sin(Math.PI * Math.min(1, Math.max(0, this.tCur)));
     this.camera.position.x += (this.pointerNdc.x * 0.35 - this.camera.position.x) * 0.03;
     this.camera.position.y += (this.pointerNdc.y * 0.22 - this.camera.position.y) * 0.03;
-    this.camera.position.z = 11 - storm * this.push;
+    this.camera.position.z = this.camZ ?? 11 - storm * this.push;
     this.camera.lookAt(0, 0, 0);
     this.updateGraph();
     this.threadMat.opacity = this.graphOpacity * 0.22;

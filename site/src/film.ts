@@ -67,6 +67,13 @@ function caption(tl: gsap.core.Timeline, at: number, hold: number, kicker: strin
     // keep the fallback routes
   }
 
+  const label = new URLSearchParams(location.search).get("label");
+  if (label) {
+    const el = document.createElement("div");
+    el.textContent = label;
+    el.style.cssText = "position:fixed;left:0;right:0;bottom:4vh;z-index:9;text-align:center;font:600 3.2vh 'Familjen Grotesk',sans-serif;color:#ff5b1f;letter-spacing:0.02em";
+    document.body.appendChild(el);
+  }
   p.prepareIntro(14, 0);
   p.start();
 
@@ -80,22 +87,50 @@ function caption(tl: gsap.core.Timeline, at: number, hold: number, kicker: strin
   tl.fromTo("#mark", { opacity: 0, letterSpacing: "1em" }, { opacity: 1, letterSpacing: "0.42em", duration: 1.2, ease: "expo.out" }, 1.6);
   tl.to("#mark", { opacity: 0, filter: "blur(10px)", duration: 0.4, ease: "power2.in" }, 2.55);
 
-  // 2 · big bang: everything collapses into one white-hot point, then explodes outward
-  //     as a shockwave into the spinning storm, which settles into the network
-  const pinch = { v: 0 };
-  const setPinch = () => p.setPinch(pinch.v);
-  tl.call(() => p.swirl(1.6), [], 2.6);
-  tl.to(pinch, { v: 1, duration: 0.55, ease: "power3.in", onUpdate: setPinch }, 2.65);
-  tl.fromTo("#core", { opacity: 0, scale: 0.15 }, { opacity: 1, scale: 0.55, duration: 0.5, ease: "power3.in" }, 2.7);
-  tl.call(() => {
-    p.jump(14, 0, 0.5); // straight into the storm while everything sits in the core
-    p.swirl(3.4);
-    void p.glide(1, 2.4);
-  }, [], 3.2);
-  tl.to(pinch, { v: 0, duration: 0.9, ease: "expo.out", onUpdate: setPinch }, 3.2);
-  tl.to("#core", { opacity: 0, scale: 1.8, duration: 0.45, ease: "power2.out" }, 3.2);
-  tl.fromTo("#ring1", { opacity: 1, scale: 0.05 }, { opacity: 0, scale: 4.2, duration: 1.3, ease: "expo.out" }, 3.2);
-  tl.fromTo("#ring2", { opacity: 0.9, scale: 0.05 }, { opacity: 0, scale: 3, duration: 1.5, ease: "expo.out" }, 3.34);
+  // 2 · the logo becomes the network; ?intro= picks how (previews), default "flow"
+  const intro = new URLSearchParams(location.search).get("intro") ?? "flow";
+  if (intro === "flow") {
+    // no storm, no light: every particle arcs from the logo straight to its place in the network
+    p.push = 1.2;
+    tl.call(() => {
+      p.setDirect(1);
+      p.jump(14, 0, 0);
+      void p.glide(1, 2.6);
+    }, [], 2.7);
+    tl.call(() => {
+      p.setDirect(0);
+      p.push = 2.6;
+    }, [], 5.4);
+  } else if (intro === "fly") {
+    // the camera dives into the logo's core, stars rush past, and pulls back out of the network
+    const cam = { z: 11 };
+    const setCam = () => (p.camZ = cam.z);
+    tl.to(cam, { z: 0.9, duration: 1.15, ease: "power3.in", onUpdate: setCam }, 2.65);
+    tl.call(() => p.jump(14, 0, 1), [], 3.8);
+    tl.to(cam, { z: 11, duration: 1.9, ease: "expo.out", onUpdate: setCam, onComplete: () => (p.camZ = null) }, 3.8);
+  } else if (intro === "vortex") {
+    // the earlier vortex, without the light
+    tl.call(() => {
+      p.swirl(3.2);
+      void p.open(3.0);
+    }, [], 2.75);
+  } else {
+    // big bang: collapse into a white-hot point, then explode with shockwave rings
+    const pinch = { v: 0 };
+    const setPinch = () => p.setPinch(pinch.v);
+    tl.call(() => p.swirl(1.6), [], 2.6);
+    tl.to(pinch, { v: 1, duration: 0.55, ease: "power3.in", onUpdate: setPinch }, 2.65);
+    tl.fromTo("#core", { opacity: 0, scale: 0.15 }, { opacity: 1, scale: 0.55, duration: 0.5, ease: "power3.in" }, 2.7);
+    tl.call(() => {
+      p.jump(14, 0, 0.5);
+      p.swirl(3.4);
+      void p.glide(1, 2.4);
+    }, [], 3.2);
+    tl.to(pinch, { v: 0, duration: 0.9, ease: "expo.out", onUpdate: setPinch }, 3.2);
+    tl.to("#core", { opacity: 0, scale: 1.8, duration: 0.45, ease: "power2.out" }, 3.2);
+    tl.fromTo("#ring1", { opacity: 1, scale: 0.05 }, { opacity: 0, scale: 4.2, duration: 1.3, ease: "expo.out" }, 3.2);
+    tl.fromTo("#ring2", { opacity: 0.9, scale: 0.05 }, { opacity: 0, scale: 3, duration: 1.5, ease: "expo.out" }, 3.34);
+  }
   tl.call(() => p.swirl(0), [], 4.6);
   tl.to(["#brand", "#date"], { opacity: 1, duration: 1, ease: "power2.out" }, 5.2);
   caption(tl, 5.0, 3.0, "Your AI × LayerZero", "Every chain.", "One conversation.");
