@@ -6,7 +6,7 @@ import { defineConfig, type Plugin } from "vite";
 // In development, /mcp and /api are proxied to a local Plexa server (npm run dev:http).
 const API = process.env.PLEXA_API ?? "http://127.0.0.1:3000";
 const SITE = fileURLToPath(new URL("./site/", import.meta.url));
-export const PAGES = ["product", "docs", "stats", "company", "contact"];
+export const PAGES = ["product", "docs", "stats", "company", "contact", "soon"];
 
 /** Inlines shared markup: <!--#include nav--> → site/partials/nav.html */
 function partials(): Plugin {

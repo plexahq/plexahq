@@ -35,7 +35,7 @@ const DIM = new THREE.Color("#5A5F68");
 const pointsVert = /* glsl */ `
   attribute vec3 aA; attribute vec3 aC; attribute vec3 aF; attribute float aSeed;
   uniform mat4 uMA, uMC;
-  uniform float uT, uIntro, uTime, uSize, uPixelRatio, uMouseStrength, uBoost;
+  uniform float uT, uIntro, uTime, uSize, uPixelRatio, uMouseStrength, uBoost, uSpin;
   uniform float uNoiseA, uNoiseC, uAccA, uAccC, uOpA, uOpC, uFloodOp, uMaskA, uMaskC, uMaskStrength;
   uniform vec3 uMouse;
   varying float vSeed; varying float vAlpha; varying float vAccent;
@@ -52,7 +52,7 @@ const pointsVert = /* glsl */ `
 
   // The full-screen "storm" between formations: a disk of stardust that swirls with scroll.
   vec3 storm(vec3 f, float s) {
-    float tw = (uT - 0.5) * 1.6 * (0.35 + 0.65 * s) + uTime * 0.02;
+    float tw = (uT - 0.5) * 1.6 * (0.35 + 0.65 * s) + uTime * 0.02 + uSpin * (0.45 + 0.55 * s);
     float c = cos(tw), sn = sin(tw);
     vec3 p = vec3(c * f.x - sn * f.y, sn * f.x + c * f.y, f.z);
     p += vec3(sin(p.y * 0.45 + uTime * 0.7 + s * 6.0), cos(p.x * 0.35 + uTime * 0.55 + s * 4.0), sin(uTime * 0.4 + s * 9.0)) * 0.35;
@@ -138,6 +138,11 @@ export class Plexus {
   private pair: [number, number] = [-1, -1];
   private tCur = 0;
   private scripted = false;
+  /** Vortex: the scene is held in the storm and spun (teaser "opens at mainnet" moments). */
+  private hold = false;
+  private spinSpeed = 0;
+  private spinTarget = 0;
+  private spinAngle = 0;
   private target = { a: 0, c: 1, t: 0 };
   private graphGroup = new THREE.Group();
   private graphView = -1;
@@ -197,7 +202,7 @@ export class Plexus {
       uniforms: {
         uMA: { value: this.MA }, uMC: { value: this.MC },
         uT: { value: 0 }, uIntro: { value: opts.reduced ? 1 : 0 }, uTime: { value: 0 }, uSize: { value: 3.2 },
-        uPixelRatio: { value: this.renderer.getPixelRatio() }, uMouseStrength: { value: opts.reduced ? 0 : 0.42 }, uBoost: { value: 0 },
+        uPixelRatio: { value: this.renderer.getPixelRatio() }, uMouseStrength: { value: opts.reduced ? 0 : 0.42 }, uBoost: { value: 0 }, uSpin: { value: 0 },
         uNoiseA: { value: 0 }, uNoiseC: { value: 0 }, uAccA: { value: 0.14 }, uAccC: { value: 0.14 }, uOpA: { value: 1 }, uOpC: { value: 1 },
         uFloodOp: { value: 0.95 }, uMaskA: { value: 1 }, uMaskC: { value: 1 }, uMaskStrength: { value: 0.8 }, uMouse: { value: this.mouse }, uInk: { value: INK }, uSig: { value: SIG },
       },
@@ -392,6 +397,11 @@ export class Plexus {
    */
   private advance(dt: number) {
     if (this.scripted) return; // the intro drives tCur itself
+    if (this.hold) {
+      // into the storm, whatever the scroll says
+      this.tCur += Math.max(-1.6 * dt, Math.min(1.6 * dt, 0.5 - this.tCur));
+      return;
+    }
     const T = this.target;
     const max = 1.4 * dt;
     const stepTo = (goal: number, linear = false) => {
@@ -460,6 +470,13 @@ export class Plexus {
         },
       });
     });
+  }
+
+  /** Spin the scene into a full-screen vortex (true), or let it settle back to the page (false). */
+  vortex(on: boolean) {
+    if (this.opts.reduced) return;
+    this.hold = on;
+    this.spinTarget = on ? 2.4 : 0;
   }
 
   intro() {
@@ -599,6 +616,9 @@ export class Plexus {
     this.last = now;
     this.time += dt;
     this.advance(dt);
+    this.spinSpeed += (this.spinTarget - this.spinSpeed) * Math.min(1, dt * 2.2);
+    this.spinAngle += this.spinSpeed * dt;
+    this.mat.uniforms.uSpin!.value = this.spinAngle;
     const u = this.mat.uniforms;
     u.uT!.value = this.tCur;
     u.uTime!.value = this.time;
