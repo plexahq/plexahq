@@ -47,39 +47,45 @@ whenVisible($("timeline"), () => {
   if (!autoTracked) feed.on(() => pick());
 }, "top bottom");
 
-// Loader: count up while the 3D scene loads, then assemble the plexus.
-const num = $("loader-num");
-const bar = $("loader-bar");
-let shown = 0;
-let target = 30;
-const loaderTick = () => {
-  shown += (target - shown) * 0.12 + 0.4;
-  if (shown > target) shown = target;
-  num.textContent = String(Math.floor(shown)).padStart(3, "0");
-  bar.style.transform = `scaleX(${shown / 100})`;
-  if (shown < 100) requestAnimationFrame(loaderTick);
-  else finish();
-};
-requestAnimationFrame(loaderTick);
+// Intro: the mark draws itself while the 3D scene loads; then the stardust gathers into the
+// logo, the logo bursts, and the storm settles into the hero as the page opens.
+const INTRO_LOGO = 14; // the intro view in scene/plexus.ts VIEWS
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const t0 = performance.now();
+let opened = false;
+chapters.lenis?.stop();
 
-let finished = false;
-function finish() {
-  if (finished) return;
-  finished = true;
-  setTimeout(() => {
-    document.body.classList.remove("is-loading");
+const SKIP_EVENTS = ["wheel", "touchstart", "keydown", "pointerdown"];
+// impatient visitors: any scroll, tap or key during the intro opens the page at once
+const skip = () => {
+  if (performance.now() - t0 > 400) openPage();
+};
+for (const ev of SKIP_EVENTS) addEventListener(ev, skip, { passive: true });
+
+function openPage() {
+  if (opened) return;
+  opened = true;
+  for (const ev of SKIP_EVENTS) removeEventListener(ev, skip);
+  document.body.classList.remove("is-loading");
+  chapters.lenis?.start();
+  if (plexus && !reduced) {
+    void plexus.open(1.6);
+    setTimeout(() => revealHero(reduced), 620);
+  } else {
     plexus?.intro();
     revealHero(reduced);
-  }, 180);
+  }
 }
 
 (async () => {
   await document.fonts.ready;
-  target = 60;
   try {
     const { createPlexus } = await import("./scene/plexus");
-    plexus = createPlexus($("gl") as HTMLCanvasElement, { count: narrow ? 3200 : 9000, reduced, labels: $("node-labels") });
+    plexus = createPlexus($("gl") as HTMLCanvasElement, { count: narrow ? 5200 : 9000, reduced, labels: $("node-labels") });
     if (plexus) {
+      // skipped before the scene was ready: just let the stardust settle into the hero
+      if (opened) plexus.intro();
+      else if (!reduced) plexus.prepareIntro(INTRO_LOGO, 0);
       plexus.start();
       chapters.onTransition((a, c, t) => plexus!.setTransition(a, c, t));
       // pulses: every fresh message, plus a slow replay so the network never sleeps
@@ -96,6 +102,15 @@ function finish() {
   } catch (e) {
     console.error("3D scene failed to load", e);
     $("gl").style.display = "none";
+    plexus = null;
   }
-  target = 100;
+  // give the mark a moment to draw itself
+  await sleep(Math.max(0, 950 - (performance.now() - t0)));
+  if (opened) return;
+  if (plexus && !reduced) {
+    document.body.classList.add("intro-assemble");
+    await plexus.assemble(1.55);
+    await sleep(220);
+  }
+  openPage();
 })();

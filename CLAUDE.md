@@ -26,7 +26,7 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
   - Pages: `index.html` (home, 14 chapters `data-chapter` 0–13: …5 cross-chain, 6 trust check, 7 zero + ZRO panel, 8 markets, 9 security…), plus `product`, `docs`, `stats`, `company`, `contact`. Chapter index = formation index = `VIEWS` index; inserting a chapter means inserting in all three and updating `SCENES` in `page.ts`.
   - `partials/nav.html` and `partials/footer.html` are inlined with `<!--#include name-->` by a plugin in `vite.config.ts`.
   - Clean URLs: `cleanUrls` in `vercel.json`, plus a dev/preview middleware.
-  - `src/main.ts`: home bootstrap. `src/page.ts`: sub-pages, with a `SCENES` map giving each page a hero and an ambient formation.
+  - `src/main.ts`: home bootstrap. Intro: the loader's SVG mark draws itself while the scene loads; then the dust gathers into the particle logo (view/formation 14, not a chapter; `Plexus.prepareIntro` → `assemble` → `open`), the logo bursts through the storm into the hero and the page opens. Any scroll, tap or key skips it. Nav, HUD and rail stay hidden until then. `src/page.ts`: sub-pages, with a `SCENES` map giving each page a hero and an ambient formation.
   - `src/motion.ts`: Lenis, GSAP ScrollTrigger, word splitting, reveals, kicker scramble, chapter HUD and rail. It emits scroll-scrubbed transitions as `(a, c, t)`. A ResizeObserver refreshes ScrollTrigger when live demos change the page height.
     - Home chapters use `sceneCuts()`: each chapter's `.wrap` blocks are moved into a `.stage` that the scroll itself scrubs. It arrives tilted up from depth (blur only while moving), with its first-screen headline words and `[data-reveal]` items in the same timeline; it leaves by drifting up, swelling and dissolving into the particle storm. Nothing is time-locked, so it follows the scroll both ways. Any filter or opacity left on a stage at rest would kill the panels' backdrop blur, so rest states are cleared.
     - A page-turn mode (particles drawing the page's text) was tried and rejected by the owner: dotted text looked broken and waiting for a turn felt slow.
@@ -38,7 +38,8 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
     - Each particle has 3 targets: formation A, a full-screen "storm" and formation C. `uT` runs 0..1, with the storm at 0.5.
     - `VIEWS` places each formation: scale > 1.3 means a full-screen backdrop, otherwise it sits in the free right column.
     - Graph overlay (nodes, threads, live pulses) shows for views with `graph` 1 (sphere) or 2 (ring).
-    - `mask` on each view dims particles behind text (1 left column, 2 centre; phones dim everywhere). Keep copy readable.
+    - `mask` on each view dims particles behind text (1 left column, 2 centre; phones dim everywhere, lightly). Keep copy readable.
+    - Phones (`isNarrow`): formations are sized to the screen width (`viewW / 6.2`), 5200 particles, opacity ×0.9, mask strength 0.42, lighter vignette. Earlier settings made them nearly invisible.
     - Scroll sets a target; `advance()` moves `tCur` at most ~1.4/s and switches formation pairs only at a shared endpoint or inside the storm, so fast scrolling shows one storm, not a strobe.
 - Design tokens:
   - Colours: background `#0A0B0E`, signal orange `#FF5B1F`, verified teal `#2FD3B5`.

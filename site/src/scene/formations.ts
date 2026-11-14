@@ -412,8 +412,8 @@ const logo: Gen = (out, n, r) => {
   }
 };
 
-/** Formation generator per chapter index (0..13). */
-export const FORMATIONS: Gen[] = [plexus, stat, converge, blocks, scanner, ringGraph, quorum, orbits, candles, lattice, wall, helix, galaxy, logo];
+/** Formation generator per chapter index (0..13), then 14: the intro logo. */
+export const FORMATIONS: Gen[] = [plexus, stat, converge, blocks, scanner, ringGraph, quorum, orbits, candles, lattice, wall, helix, galaxy, logo, logo];
 
 /** Accent indices: which particles take the signal colour, per chapter. */
-export const ACCENT_RATIO = [0.14, 0.04, 0.22, 0.1, 0.18, 0.14, 0.2, 0.32, 0.16, 0.12, 0.05, 0.2, 0.12, 0.36];
+export const ACCENT_RATIO = [0.14, 0.04, 0.22, 0.1, 0.18, 0.14, 0.2, 0.32, 0.16, 0.12, 0.05, 0.2, 0.12, 0.36, 0.4];

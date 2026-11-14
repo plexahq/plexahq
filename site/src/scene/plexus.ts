@@ -24,6 +24,7 @@ export const VIEWS: View[] = [
   V(0.24, 0.0, 0.95, 0.12, 0.1, 0, 0, 0.95), // 11 roadmap: helix, side
   V(0.05, -0.05, 1.7, 0.04, 0.95, 0, 0, 0.45), // 12 faq: galaxy, full
   V(0.0, 0.17, 0.68, 0, 0, 0, 0, 1, 0, 0, 2), // 13 final: logo, centre
+  V(0.0, 0.0, 0.62, 0, 0, 0, 0, 1, 0, 0, 0), // 14 intro: the logo the stardust gathers into (not a chapter)
 ];
 
 const INK = new THREE.Color("#ECEAE4");
@@ -136,6 +137,7 @@ export class Plexus {
   private views: View[];
   private pair: [number, number] = [-1, -1];
   private tCur = 0;
+  private scripted = false;
   private target = { a: 0, c: 1, t: 0 };
   private graphGroup = new THREE.Group();
   private graphView = -1;
@@ -331,7 +333,7 @@ export class Plexus {
     this.viewH = 2 * this.camera.position.z * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
     this.viewW = this.viewH * this.camera.aspect;
     const s = Math.min(h / 900, w / 1000) * (this.isNarrow() ? 1.15 : 1);
-    this.mat.uniforms.uSize!.value = 3.2 * Math.max(0.7, s);
+    this.mat.uniforms.uSize!.value = 3.2 * Math.max(this.isNarrow() ? 0.95 : 0.7, s);
     for (const m of [this.nodeMat, this.pulseMat]) m.uniforms.uScale!.value = Math.max(0.7, s);
     this.buildStorm();
   }
@@ -341,10 +343,11 @@ export class Plexus {
     const v = this.views[i]!;
     const narrow = this.isNarrow();
     const full = v.scale > 1.3;
-    const fit = Math.min(1, (this.viewW / 15.5) * (narrow ? 1.5 : 1));
-    const s = v.scale * fit * (narrow ? (full ? 0.9 : 0.7) : 1);
+    // phones are tall and thin: size formations to the width so they fill the screen instead of shrinking away
+    const fit = narrow ? Math.min(1, this.viewW / 6.2) : Math.min(1, this.viewW / 15.5);
+    const s = v.scale * fit * (narrow && full ? 0.95 : 1);
     const { p, q, e } = this.tmp;
-    p.set(narrow ? 0 : v.x * this.viewW, v.y * this.viewH + (narrow && !full ? 0.4 : 0), 0);
+    p.set(narrow ? 0 : v.x * this.viewW, v.y * this.viewH + (narrow && !full && v.mask === 1 ? 0.5 : 0), 0);
     q.setFromEuler(e.set(v.rotX, v.rotY + this.time * (this.opts.reduced ? 0 : v.spin), 0, "XYZ"));
     out.compose(p, q, this.tmp.s.set(s, s, s));
   }
@@ -375,11 +378,11 @@ export class Plexus {
     u.uNoiseC!.value = vc.noise;
     u.uAccA!.value = ACCENT_RATIO[a];
     u.uAccC!.value = ACCENT_RATIO[c];
-    u.uOpA!.value = va.opacity * (narrow ? 0.62 : 1);
-    u.uOpC!.value = vc.opacity * (narrow ? 0.62 : 1);
+    u.uOpA!.value = va.opacity * (narrow ? 0.9 : 1);
+    u.uOpC!.value = vc.opacity * (narrow ? 0.9 : 1);
     u.uMaskA!.value = narrow ? 3 : va.mask;
     u.uMaskC!.value = narrow ? 3 : vc.mask;
-    u.uMaskStrength!.value = narrow ? 0.72 : 0.8;
+    u.uMaskStrength!.value = narrow ? 0.42 : 0.8;
   }
 
   /**
@@ -388,6 +391,7 @@ export class Plexus {
    * which is identical for every pair, so skipping several chapters at once morphs straight to the last one.
    */
   private advance(dt: number) {
+    if (this.scripted) return; // the intro drives tCur itself
     const T = this.target;
     const max = 1.4 * dt;
     const stepTo = (goal: number, linear = false) => {
@@ -422,6 +426,42 @@ export class Plexus {
   }
 
   /** Opening: the storm condenses into the first view. */
+  /**
+   * Home intro, step 1: the particles start as dust scattered over the screen, holding the
+   * intro logo (view `logo`) as their first formation and the hero (`next`) as the second.
+   */
+  prepareIntro(logo: number, next: number) {
+    this.scripted = true;
+    this.pair = [-1, -1];
+    this.applyPair(logo, next);
+    this.tCur = 0;
+    this.mat.uniforms.uIntro!.value = 0;
+  }
+
+  /** Step 2: the dust gathers into the logo. */
+  assemble(duration = 1.7): Promise<void> {
+    return new Promise((done) => {
+      gsap.to(this.mat.uniforms.uIntro!, { value: 1, duration, ease: "power3.inOut", onComplete: () => done() });
+    });
+  }
+
+  /** Step 3: the logo bursts into the storm, which settles into the hero; then scroll takes over. */
+  open(duration = 1.6): Promise<void> {
+    gsap.killTweensOf(this.mat.uniforms.uIntro!);
+    gsap.to(this.mat.uniforms.uIntro!, { value: 1, duration: 0.35, ease: "power2.out" });
+    return new Promise((done) => {
+      gsap.to(this, {
+        tCur: 1,
+        duration,
+        ease: "power2.inOut",
+        onComplete: () => {
+          this.scripted = false;
+          done();
+        },
+      });
+    });
+  }
+
   intro() {
     if (this.opts.reduced) return;
     this.mat.uniforms.uIntro!.value = 0;
