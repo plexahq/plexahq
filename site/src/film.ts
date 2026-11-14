@@ -75,22 +75,31 @@ function caption(tl: gsap.core.Timeline, at: number, hold: number, kicker: strin
 
   // 1 · drifting dust gathers into the logo; the name settles beneath it
   tl.call(() => p.swirl(0.7), [], 0);
-  tl.call(() => void p.assemble(2.8), [], 0.2);
-  tl.call(() => p.swirl(0), [], 1.8);
-  tl.fromTo("#mark", { opacity: 0, letterSpacing: "1em" }, { opacity: 1, letterSpacing: "0.42em", duration: 1.5, ease: "expo.out" }, 1.9);
-  tl.to("#mark", { opacity: 0, filter: "blur(10px)", duration: 0.5, ease: "power2.in" }, 3.25);
+  tl.call(() => void p.assemble(2.4), [], 0.2);
+  tl.call(() => p.swirl(0), [], 1.5);
+  tl.fromTo("#mark", { opacity: 0, letterSpacing: "1em" }, { opacity: 1, letterSpacing: "0.42em", duration: 1.2, ease: "expo.out" }, 1.6);
+  tl.to("#mark", { opacity: 0, filter: "blur(10px)", duration: 0.4, ease: "power2.in" }, 2.55);
 
-  // 2 · the logo bursts in a flash, the camera dives through the vortex, the network forms
-  tl.fromTo("#flash", { opacity: 0, scale: 0.4 }, { opacity: 0.7, scale: 1, duration: 0.3, ease: "power2.out" }, 3.7);
-  tl.to("#flash", { opacity: 0, scale: 2.2, duration: 1.2, ease: "power2.in" }, 4.0);
+  // 2 · big bang: everything collapses into one white-hot point, then explodes outward
+  //     as a shockwave into the spinning storm, which settles into the network
+  const pinch = { v: 0 };
+  const setPinch = () => p.setPinch(pinch.v);
+  tl.call(() => p.swirl(1.6), [], 2.6);
+  tl.to(pinch, { v: 1, duration: 0.55, ease: "power3.in", onUpdate: setPinch }, 2.65);
+  tl.fromTo("#core", { opacity: 0, scale: 0.15 }, { opacity: 1, scale: 0.55, duration: 0.5, ease: "power3.in" }, 2.7);
   tl.call(() => {
-    p.swirl(3.2);
-    void p.open(3.0);
-  }, [], 3.75);
-  tl.call(() => p.swirl(0), [], 5.3);
-  tl.to(["#brand", "#date"], { opacity: 1, duration: 1, ease: "power2.out" }, 6.2);
-  caption(tl, 6.0, 3.0, "Your AI × LayerZero", "Every chain.", "One conversation.");
-  for (let t = 5.8, i = 0; t < 9.6; t += 0.28, i++) {
+    p.jump(14, 0, 0.5); // straight into the storm while everything sits in the core
+    p.swirl(3.4);
+    void p.glide(1, 2.4);
+  }, [], 3.2);
+  tl.to(pinch, { v: 0, duration: 0.9, ease: "expo.out", onUpdate: setPinch }, 3.2);
+  tl.to("#core", { opacity: 0, scale: 1.8, duration: 0.45, ease: "power2.out" }, 3.2);
+  tl.fromTo("#ring1", { opacity: 1, scale: 0.05 }, { opacity: 0, scale: 4.2, duration: 1.3, ease: "expo.out" }, 3.2);
+  tl.fromTo("#ring2", { opacity: 0.9, scale: 0.05 }, { opacity: 0, scale: 3, duration: 1.5, ease: "expo.out" }, 3.34);
+  tl.call(() => p.swirl(0), [], 4.6);
+  tl.to(["#brand", "#date"], { opacity: 1, duration: 1, ease: "power2.out" }, 5.2);
+  caption(tl, 5.0, 3.0, "Your AI × LayerZero", "Every chain.", "One conversation.");
+  for (let t = 4.8, i = 0; t < 8.6; t += 0.28, i++) {
     const [a, b] = routes[i % routes.length]!;
     tl.call(() => p.pulse(a, b, i % 5 !== 0), [], t);
   }
@@ -99,22 +108,22 @@ function caption(tl: gsap.core.Timeline, at: number, hold: number, kicker: strin
   tl.call(() => {
     p.swirl(-2.8);
     void p.morph(0, 7, 3.0);
-  }, [], 9.3);
-  tl.call(() => p.swirl(0), [], 10.8);
-  caption(tl, 11.7, 2.9, "Zero mainnet", "Built for Zero.", "Opens November 30.");
+  }, [], 8.3);
+  tl.call(() => p.swirl(0), [], 9.8);
+  caption(tl, 10.7, 2.9, "Zero mainnet", "Built for Zero.", "Opens November 30.");
 
   // 4 · back into the logo, the name and the date
   tl.call(() => {
     p.swirl(3);
     void p.morph(7, 13, 3.0);
-  }, [], 14.8);
-  tl.call(() => p.swirl(0), [], 16.3);
-  tl.to(["#brand", "#date"], { opacity: 0, duration: 0.7 }, 15.0);
+  }, [], 13.8);
+  tl.call(() => p.swirl(0), [], 15.3);
+  tl.to(["#brand", "#date"], { opacity: 0, duration: 0.7 }, 14.0);
   $("end-name").innerHTML = wordsHtml("Plexa");
-  tl.fromTo("#end-name .w > span", { y: 0, yPercent: 105, filter: "blur(10px)" }, { yPercent: 0, filter: "blur(0px)", duration: 1.3, ease: "expo.out" }, 17.2);
-  tl.fromTo("#end-line", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" }, 17.7);
-  tl.fromTo("#end-date", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" }, 18.1);
-  tl.to({}, { duration: 1.2 }, 19.0); // a short hold on the last frame
+  tl.fromTo("#end-name .w > span", { y: 0, yPercent: 105, filter: "blur(10px)" }, { yPercent: 0, filter: "blur(0px)", duration: 1.3, ease: "expo.out" }, 16.2);
+  tl.fromTo("#end-line", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" }, 16.7);
+  tl.fromTo("#end-date", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" }, 17.1);
+  tl.to({}, { duration: 1.2 }, 18.0); // a short hold on the last frame
 
   window.filmDuration = tl.duration();
   window.filmStart = () => void tl.play(0);

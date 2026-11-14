@@ -13,7 +13,10 @@
     .film-brand svg { width: 3.2vh; height: 3.2vh; }
     .film-date { position: fixed; top: 4.6vh; right: 4.2vh; z-index: 4; font-family: "Fragment Mono", monospace; font-size: 1.5vh; letter-spacing: 0.18em; text-transform: uppercase; color: #9a9da4; opacity: 0; }
     .film-date b { color: #ff5b1f; font-weight: 400; }
-    .film-flash { position: fixed; left: 50%; top: 44%; width: 120vh; height: 120vh; margin: -60vh 0 0 -60vh; z-index: 2; pointer-events: none; border-radius: 50%; background: radial-gradient(circle, rgba(255, 140, 80, 0.95) 0%, rgba(255, 91, 31, 0.45) 22%, rgba(255, 91, 31, 0) 62%); mix-blend-mode: screen; opacity: 0; }
+    /* the big bang: a white-hot core and two sharp shockwave rings, centred where everything collapses */
+    .film-core { position: fixed; left: 50%; top: 50%; width: 22vh; height: 22vh; margin: -11vh 0 0 -11vh; z-index: 2; pointer-events: none; border-radius: 50%; background: radial-gradient(circle, #fff 0%, rgba(255, 214, 190, 0.95) 14%, rgba(255, 120, 60, 0.55) 34%, rgba(255, 91, 31, 0) 68%); mix-blend-mode: screen; opacity: 0; }
+    .film-ring { position: fixed; left: 50%; top: 50%; width: 50vh; height: 50vh; margin: -25vh 0 0 -25vh; z-index: 2; pointer-events: none; border-radius: 50%; border: 0.3vh solid rgba(255, 226, 205, 0.95); box-shadow: 0 0 2.4vh rgba(255, 91, 31, 0.85), inset 0 0 2.4vh rgba(255, 91, 31, 0.6); mix-blend-mode: screen; opacity: 0; }
+    .film-ring.two { border-width: 0.18vh; border-color: rgba(255, 140, 90, 0.9); }
     .film-mark { position: fixed; left: 0; right: 0; top: 76vh; z-index: 4; text-align: center; font-family: "Familjen Grotesk", sans-serif; font-weight: 600; font-size: 3.4vh; letter-spacing: 0.42em; padding-left: 0.42em; color: #ecebe4; opacity: 0; }
     .film-cap { position: fixed; left: 6vw; right: 6vw; bottom: 9vh; z-index: 4; text-align: center; }
     .fc-k { font-family: "Fragment Mono", monospace; font-size: 1.7vh; letter-spacing: 0.24em; text-transform: uppercase; color: #ff5b1f; margin: 0 0 2vh; opacity: 0; }
@@ -35,7 +38,9 @@
   <div class="node-labels" id="node-labels"></div>
   <div class="film-brand" id="brand"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="3.4" fill="#FF5B1F"/><g stroke="currentColor" stroke-width="1.4" fill="none"><path d="M13 9.6V3M13 16.4V23M9.9 11.2 4.3 8M16.1 14.8 21.7 18M9.9 14.8 4.3 18M16.1 11.2 21.7 8"/></g><g fill="currentColor"><circle cx="13" cy="3" r="1.8"/><circle cx="13" cy="23" r="1.8"/><circle cx="4.3" cy="8" r="1.8"/><circle cx="21.7" cy="18" r="1.8"/><circle cx="4.3" cy="18" r="1.8"/><circle cx="21.7" cy="8" r="1.8"/></g></svg>Plexa</div>
   <div class="film-date" id="date">Zero mainnet · <b>Nov 30</b></div>
-  <div class="film-flash" id="flash"></div>
+  <div class="film-core" id="core"></div>
+  <div class="film-ring" id="ring1"></div>
+  <div class="film-ring two" id="ring2"></div>
   <div class="film-mark" id="mark">PLEXA</div>
   <div class="film-end" id="end">
     <p class="fe-name" id="end-name"></p>

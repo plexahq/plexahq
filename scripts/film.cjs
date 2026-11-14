@@ -43,7 +43,7 @@ const URL = process.env.FILM_URL ?? "http://127.0.0.1:5173/film.html";
 
   if (mode === "--stills") {
     let t = 0;
-    for (const at of [1.2, 3.0, 4.2, 5.0, 7.8, 10.6, 13.4, 16.0, 20.0]) {
+    for (const at of [2.4, 2.95, 3.15, 3.3, 3.5, 3.8, 4.3, 6.6, 18.9]) {
       await page.clock.runFor(Math.round((at - t) * 1000));
       t = at;
       await page.screenshot({ path: path.join(out, `still-${String(at).replace(".", "_")}.jpg`), type: "jpeg", quality: 90 });

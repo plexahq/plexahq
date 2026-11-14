@@ -35,7 +35,7 @@ const DIM = new THREE.Color("#5A5F68");
 const pointsVert = /* glsl */ `
   attribute vec3 aA; attribute vec3 aC; attribute vec3 aF; attribute float aSeed;
   uniform mat4 uMA, uMC;
-  uniform float uT, uIntro, uTime, uSize, uPixelRatio, uMouseStrength, uBoost, uSpin;
+  uniform float uT, uIntro, uTime, uSize, uPixelRatio, uMouseStrength, uBoost, uSpin, uPinch;
   uniform float uNoiseA, uNoiseC, uAccA, uAccC, uOpA, uOpC, uFloodOp, uMaskA, uMaskC, uMaskStrength;
   uniform vec3 uMouse;
   varying float vSeed; varying float vAlpha; varying float vAccent;
@@ -70,6 +70,9 @@ const pointsVert = /* glsl */ `
     // opening: the storm condenses into the first formation
     float ti = ease((uIntro * 1.4 - s * 0.4));
     p = mix(storm(aF * 1.25, s), p, ti);
+    // pinch: everything collapses into one white-hot point (the video's big bang)
+    float pin = ease(uPinch * 1.3 - s * 0.3);
+    p = mix(p, p * 0.035, pin);
     float flood = max(t1 * (1.0 - t2), 1.0 - ti);
     float noise = mix(uNoiseA, uNoiseC, t2) + uBoost;
     p += vec3(sin(uTime * 0.55 + s * 12.0), cos(uTime * 0.45 + s * 9.0), sin(uTime * 0.35 + s * 7.0)) * (0.022 + noise);
@@ -81,7 +84,7 @@ const pointsVert = /* glsl */ `
     vSeed = s;
     float acc = mix(mix(uAccA, uAccC, t2), 0.26, flood);
     vAccent = step(1.0 - acc, fract(s * 7.13));
-    vAlpha = smoothstep(28.0, 6.5, -mv.z) * mix(mix(uOpA, uOpC, t2), uFloodOp, flood);
+    vAlpha = smoothstep(28.0, 6.5, -mv.z) * mix(mix(uOpA, uOpC, t2), uFloodOp, flood) * (1.0 + pin * 1.4);
     vec2 ndc = gl_Position.xy / gl_Position.w;
     vAlpha *= 1.0 - uMaskStrength * mix(maskOf(uMaskA, ndc), maskOf(uMaskC, ndc), t2);
   }`;
@@ -204,7 +207,7 @@ export class Plexus {
       uniforms: {
         uMA: { value: this.MA }, uMC: { value: this.MC },
         uT: { value: 0 }, uIntro: { value: opts.reduced ? 1 : 0 }, uTime: { value: 0 }, uSize: { value: 3.2 },
-        uPixelRatio: { value: this.renderer.getPixelRatio() }, uMouseStrength: { value: opts.reduced ? 0 : 0.42 }, uBoost: { value: 0 }, uSpin: { value: 0 },
+        uPixelRatio: { value: this.renderer.getPixelRatio() }, uMouseStrength: { value: opts.reduced ? 0 : 0.42 }, uBoost: { value: 0 }, uSpin: { value: 0 }, uPinch: { value: 0 },
         uNoiseA: { value: 0 }, uNoiseC: { value: 0 }, uAccA: { value: 0.14 }, uAccC: { value: 0.14 }, uOpA: { value: 1 }, uOpC: { value: 1 },
         uFloodOp: { value: 0.95 }, uMaskA: { value: 1 }, uMaskC: { value: 1 }, uMaskStrength: { value: 0.8 }, uMouse: { value: this.mouse }, uInk: { value: INK }, uSig: { value: SIG },
       },
@@ -481,6 +484,26 @@ export class Plexus {
     this.tCur = 0;
     return new Promise((done) => {
       gsap.to(this, { tCur: 1, duration, ease: "power2.inOut", onComplete: () => done() });
+    });
+  }
+
+  /** 0..1: pull every particle into a single point at the centre (scripted video moments). */
+  setPinch(v: number) {
+    this.mat.uniforms.uPinch!.value = v;
+  }
+
+  /** Scripted: jump straight to pair (a, c) at t, e.g. into the storm while everything is pinched. */
+  jump(a: number, c: number, t: number) {
+    this.scripted = true;
+    this.applyPair(a, c);
+    this.tCur = t;
+  }
+
+  /** Scripted: move the current pair to t over `duration` seconds. */
+  glide(t: number, duration: number, ease = "power2.inOut"): Promise<void> {
+    this.scripted = true;
+    return new Promise((done) => {
+      gsap.to(this, { tCur: t, duration, ease, onComplete: () => done() });
     });
   }
 
