@@ -1,3 +1,4 @@
+import gsap from "gsap";
 import "./styles.css";
 import { initConnect, initCountdown, initRead, initSimulate, initStocks, initTools, initTrack, initTrust, initZro } from "./demos";
 import { bindFeed, LiveFeed, ZERO_AT_DEFAULT } from "./live";
@@ -70,6 +71,11 @@ function finish() {
     document.body.classList.remove("is-loading");
     plexus?.intro();
     revealHero(reduced);
+    // arriving with a chapter link (e.g. /#connect from another page)
+    if (chapters.paged && location.hash.length > 1) {
+      const target = document.querySelector<HTMLElement>(location.hash);
+      if (target) setTimeout(() => chapters.scrollTo(target), 900);
+    }
   }, 180);
 }
 
@@ -82,6 +88,28 @@ function finish() {
     if (plexus) {
       plexus.start();
       chapters.onTransition((a, c, t) => plexus!.setTransition(a, c, t));
+      if (chapters.paged) {
+        // page turns: the particles draw the incoming page, then hand it to the real one
+        const p = plexus;
+        const { samplePage } = await import("./scene/glyphs");
+        const glyph = { v: 0 };
+        const apply = () => p.setGlyph(glyph.v);
+        let tl: gsap.core.Timeline | null = null;
+        chapters.setParticles({
+          assemble(section, delay) {
+            const points = samplePage(section, p.glyphBudget);
+            tl?.kill();
+            tl = gsap.timeline();
+            if (glyph.v > 0.001) tl.to(glyph, { v: 0, duration: 0.2, ease: "power1.in", onUpdate: apply });
+            tl.call(() => p.setGlyphs(points));
+            tl.to(glyph, { v: 1, duration: 0.58, ease: "power3.out", onUpdate: apply }, `+=${delay}`);
+          },
+          release() {
+            tl?.kill();
+            tl = gsap.timeline().to(glyph, { v: 0, duration: 0.9, ease: "power2.in", onUpdate: apply });
+          },
+        });
+      }
       // pulses: every fresh message, plus a slow replay so the network never sleeps
       feed.on((s, fresh) => fresh.slice(0, 8).forEach((m, k) => setTimeout(() => plexus?.pulse(m.from, m.to, m.status === "DELIVERED"), k * 420)));
       setInterval(() => {

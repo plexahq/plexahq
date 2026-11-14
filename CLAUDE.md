@@ -28,6 +28,7 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
   - Clean URLs: `cleanUrls` in `vercel.json`, plus a dev/preview middleware.
   - `src/main.ts`: home bootstrap. `src/page.ts`: sub-pages, with a `SCENES` map giving each page a hero and an ambient formation.
   - `src/motion.ts`: Lenis, GSAP ScrollTrigger, word splitting, reveals, kicker scramble, chapter HUD and rail. It emits scroll-scrubbed transitions as `(a, c, t)`. A ResizeObserver refreshes ScrollTrigger when live demos change the page height.
+  - `src/pager.ts`: paged home on desktop (≥980px, mouse/trackpad, no reduced motion; `?scroll=1` opts out). `html.paged`: chapters are fixed full-screen pages; wheel/keys/rail/`#links` turn pages; long chapters scroll inside first; a gesture's inertia never turns two pages. On a turn the old page blurs into the storm, the particles draw the new page (`scene/glyphs.ts` samples its words and panel frames into NDC points → `Plexus.setGlyphs`/`setGlyph`), then the real page fades in on top. The footer moves into the last page. Phones keep normal scrolling.
   - `src/nav.ts`: mobile menu.
   - `src/demos.ts`: connect tabs, read demo, simulate console, LayerZero track timeline, countdown, tools grid.
   - `src/live.ts`: `LiveFeed` that polls `/api/live`. `src/mcp.ts`: `callTool` client. `src/pages/*`: docs, stats and contact logic.
