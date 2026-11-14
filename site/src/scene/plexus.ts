@@ -143,6 +143,8 @@ export class Plexus {
   private spinSpeed = 0;
   private spinTarget = 0;
   private spinAngle = 0;
+  /** How far the camera pushes into the storm (the video dives deeper than the site). */
+  push = 1.1;
   private target = { a: 0, c: 1, t: 0 };
   private graphGroup = new THREE.Group();
   private graphView = -1;
@@ -482,6 +484,11 @@ export class Plexus {
     });
   }
 
+  /** Spin the storm at this speed (radians/s, eased), without holding the scene in it. */
+  swirl(speed: number) {
+    if (!this.opts.reduced) this.spinTarget = speed;
+  }
+
   /** Spin the scene into a full-screen vortex (true), or let it settle back to the page (false). */
   vortex(on: boolean) {
     if (this.opts.reduced) return;
@@ -641,7 +648,7 @@ export class Plexus {
     const storm = Math.sin(Math.PI * Math.min(1, Math.max(0, this.tCur)));
     this.camera.position.x += (this.pointerNdc.x * 0.35 - this.camera.position.x) * 0.03;
     this.camera.position.y += (this.pointerNdc.y * 0.22 - this.camera.position.y) * 0.03;
-    this.camera.position.z = 11 - storm * 1.1;
+    this.camera.position.z = 11 - storm * this.push;
     this.camera.lookAt(0, 0, 0);
     this.updateGraph();
     this.threadMat.opacity = this.graphOpacity * 0.22;

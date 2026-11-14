@@ -50,7 +50,7 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
   - Fonts: Familjen Grotesk and Fragment Mono, via @fontsource.
 
 ## X launch video
-- `site/film.html` + `src/film.ts`: the video as a page (dev server only, not in the site build). A fixed GSAP timeline drives the scene (`Plexus.prepareIntro/assemble/open/morph`) and the captions: logo → network → LayerZero ring → verifier shield → candles → Zero orbits → logo.
+- `site/film.html` + `src/film.ts`: the video as a page (dev server only, not in the site build). A fixed GSAP timeline drives the scene (`Plexus.prepareIntro/assemble/open/morph`, `swirl`, deeper camera `push`) and the captions. Owner wants it short and focused on the main concept with slow, striking transitions: dust → logo → flash + vortex → network ("Every chain. One conversation.") → vortex → Zero orbits ("Built for Zero. Opens November 30.") → logo end card. About 27 s; ~3 s per transition.
 - `scripts/film.cjs out W H [--stills]`: renders it frame by frame under Playwright's fake clock (`clock.install` then `pauseAt`, one `runFor` per frame) and encodes MP4 with ffmpeg. Needs the dev server on :5173 and the API on :3000. 16:9 and 1:1 versions so far; add the X handle to the end card once it exists.
 
 ## Commands
