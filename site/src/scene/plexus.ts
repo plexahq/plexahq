@@ -33,13 +33,11 @@ const DIM = new THREE.Color("#5A5F68");
 
 const pointsVert = /* glsl */ `
   attribute vec3 aA; attribute vec3 aC; attribute vec3 aF; attribute float aSeed;
-  // aG: a screen position (NDC x, y) on the page being drawn, and its colour (0 ink, 1 signal, -1 not used)
-  attribute vec3 aG;
   uniform mat4 uMA, uMC;
-  uniform float uT, uIntro, uTime, uSize, uPixelRatio, uMouseStrength, uBoost, uGlyph, uGlyphSize, uAspect;
+  uniform float uT, uIntro, uTime, uSize, uPixelRatio, uMouseStrength, uBoost;
   uniform float uNoiseA, uNoiseC, uAccA, uAccC, uOpA, uOpC, uFloodOp, uMaskA, uMaskC, uMaskStrength;
   uniform vec3 uMouse;
-  varying float vSeed; varying float vAlpha; varying float vAccent; varying float vGlyph;
+  varying float vSeed; varying float vAlpha; varying float vAccent;
 
   float ease(float x) { x = clamp(x, 0.0, 1.0); return x * x * (3.0 - 2.0 * x); }
 
@@ -85,31 +83,15 @@ const pointsVert = /* glsl */ `
     vAlpha = smoothstep(28.0, 6.5, -mv.z) * mix(mix(uOpA, uOpC, t2), uFloodOp, flood);
     vec2 ndc = gl_Position.xy / gl_Position.w;
     vAlpha *= 1.0 - uMaskStrength * mix(maskOf(uMaskA, ndc), maskOf(uMaskC, ndc), t2);
-
-    // page drawing: particles leave the scene and settle on the letters and frames of the incoming page
-    float g = step(-0.5, aG.z) * ease(uGlyph * 1.6 - s * 0.6);
-    vGlyph = g;
-    if (g > 0.0) {
-      // a slight arc on the way in, and a breath of shimmer once there
-      vec2 target = aG.xy + vec2(sin(uTime * 1.7 + s * 40.0), cos(uTime * 1.3 + s * 30.0)) * 0.0011;
-      vec2 mid = mix(ndc, target, 0.5) + vec2(-(target.y - ndc.y) / uAspect, (target.x - ndc.x) * uAspect) * 0.18 * (s - 0.5);
-      float u = g;
-      vec2 q = mix(mix(ndc, mid, u), mix(mid, target, u), u);
-      gl_Position = vec4(q * gl_Position.w, gl_Position.z, gl_Position.w);
-      gl_PointSize = mix(gl_PointSize, uGlyphSize * uPixelRatio, g);
-      vAlpha = mix(vAlpha, 1.0, g);
-      vAccent = mix(vAccent, aG.z, g);
-    }
   }`;
 const pointsFrag = /* glsl */ `
   uniform vec3 uInk; uniform vec3 uSig;
-  varying float vSeed; varying float vAlpha; varying float vAccent; varying float vGlyph;
+  varying float vSeed; varying float vAlpha; varying float vAccent;
   void main() {
     vec2 c = gl_PointCoord - 0.5; float r = length(c);
     if (r > 0.5) discard;
-    float a = pow(smoothstep(0.5, 0.0, r), mix(1.5, 0.55, vGlyph));
-    float level = mix(0.32 + vSeed * 0.68, 1.0, vGlyph);
-    gl_FragColor = vec4(mix(uInk, uSig, vAccent), a * vAlpha * level * (1.0 + vAccent * 0.6) * (1.0 + vGlyph * 0.5));
+    float a = pow(smoothstep(0.5, 0.0, r), 1.5);
+    gl_FragColor = vec4(mix(uInk, uSig, vAccent), a * vAlpha * (0.32 + vSeed * 0.68) * (1.0 + vAccent * 0.6));
   }`;
 
 const glowVert = /* glsl */ `
@@ -150,8 +132,6 @@ export class Plexus {
   private aA: THREE.BufferAttribute;
   private aC: THREE.BufferAttribute;
   private aF: THREE.BufferAttribute;
-  private aG: THREE.BufferAttribute;
-  private glyphOrder: number[] = [];
   private cache = new Map<number, Float32Array>();
   private views: View[];
   private pair: [number, number] = [-1, -1];
@@ -205,15 +185,6 @@ export class Plexus {
     geo.setAttribute("aC", this.aC);
     geo.setAttribute("aF", this.aF);
     geo.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
-    this.aG = new THREE.BufferAttribute(new Float32Array(this.n * 3).fill(-1), 3);
-    geo.setAttribute("aG", this.aG);
-    // which particles draw a page, in a fixed random order so every page uses a similar mix of seeds
-    const pick = rng(911);
-    this.glyphOrder = Array.from({ length: this.n }, (_, i) => i);
-    for (let i = this.n - 1; i > 0; i--) {
-      const j = Math.floor(pick() * (i + 1));
-      [this.glyphOrder[i], this.glyphOrder[j]] = [this.glyphOrder[j]!, this.glyphOrder[i]!];
-    }
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 80);
     this.mat = new THREE.ShaderMaterial({
       vertexShader: pointsVert,
@@ -226,7 +197,6 @@ export class Plexus {
         uT: { value: 0 }, uIntro: { value: opts.reduced ? 1 : 0 }, uTime: { value: 0 }, uSize: { value: 3.2 },
         uPixelRatio: { value: this.renderer.getPixelRatio() }, uMouseStrength: { value: opts.reduced ? 0 : 0.42 }, uBoost: { value: 0 },
         uNoiseA: { value: 0 }, uNoiseC: { value: 0 }, uAccA: { value: 0.14 }, uAccC: { value: 0.14 }, uOpA: { value: 1 }, uOpC: { value: 1 },
-        uGlyph: { value: 0 }, uGlyphSize: { value: 3.1 }, uAspect: { value: 1 },
         uFloodOp: { value: 0.95 }, uMaskA: { value: 1 }, uMaskC: { value: 1 }, uMaskStrength: { value: 0.8 }, uMouse: { value: this.mouse }, uInk: { value: INK }, uSig: { value: SIG },
       },
     });
@@ -358,7 +328,6 @@ export class Plexus {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
-    this.mat.uniforms.uAspect!.value = w / h;
     this.viewH = 2 * this.camera.position.z * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
     this.viewW = this.viewH * this.camera.aspect;
     const s = Math.min(h / 900, w / 1000) * (this.isNarrow() ? 1.15 : 1);
@@ -445,33 +414,6 @@ export class Plexus {
       return stepTo(T.t);
     }
     stepTo(0.5, true);
-  }
-
-  /** How many particles can take part in drawing a page. */
-  get glyphBudget(): number {
-    return Math.floor(this.n * 0.72);
-  }
-
-  /**
-   * Gives particles screen positions to settle on (NDC x, y and a colour flag per point),
-   * usually sampled from the letters and frames of the page that is about to appear.
-   */
-  setGlyphs(points: Float32Array) {
-    const g = this.aG.array as Float32Array;
-    const m = Math.min(Math.floor(points.length / 3), this.glyphBudget);
-    g.fill(-1);
-    for (let k = 0; k < m; k++) {
-      const i = this.glyphOrder[k]! * 3;
-      g[i] = points[k * 3]!;
-      g[i + 1] = points[k * 3 + 1]!;
-      g[i + 2] = points[k * 3 + 2]!;
-    }
-    this.aG.needsUpdate = true;
-  }
-
-  /** 0: particles follow the scene; 1: they sit on the page drawing. */
-  setGlyph(v: number) {
-    this.mat.uniforms.uGlyph!.value = v;
   }
 
   /** Hold a single view (sub-pages). */

@@ -1,7 +1,6 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
-import { Pager, type PageParticles } from "./pager";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -51,38 +50,79 @@ export function scramble(el: HTMLElement, duration = 900) {
   requestAnimationFrame(step);
 }
 
+/**
+ * Home chapters arrive from depth and leave into the stardust, scrubbed by the scroll:
+ * the incoming chapter tilts up out of the dark and settles while the particle storm
+ * re-forms behind it; the outgoing one drifts up, swells and dissolves into the storm.
+ * Everything follows the scroll position, so it reverses when you scroll back.
+ */
+function sceneCuts(sections: HTMLElement[], narrow: boolean) {
+  const last = sections.length - 1;
+  sections.forEach((section, k) => {
+    const blocks = [...section.children].filter((c): c is HTMLElement => c instanceof HTMLElement && c.classList.contains("wrap"));
+    if (!blocks.length) return;
+    const stage = document.createElement("div");
+    stage.className = "stage";
+    blocks[0]!.before(stage);
+    blocks.forEach((b) => stage.appendChild(b));
+    // blur only while moving: any filter at rest would stop the panels' backdrop blur
+    const fx = { blur: 0 };
+    const applyBlur = () => (stage.style.filter = fx.blur > 0.05 ? `blur(${fx.blur.toFixed(2)}px)` : "");
+    const maxBlur = narrow ? 0 : 1;
+    // at rest the stage carries no transform or opacity at all, so panels keep their backdrop blur
+    const rest = () => gsap.set(stage, { clearProps: "transform,opacity" });
+    // what shows in the first screen of the chapter arrives with it; anything further down
+    // a long chapter rises on its own as it scrolls into view
+    const near = (el: Element) => el.getBoundingClientRect().top - section.getBoundingClientRect().top < innerHeight * 0.95;
+    const words = [...section.querySelectorAll("[data-split] .split-line > span")];
+    const items = [...section.querySelectorAll<HTMLElement>("[data-reveal]")];
+    const firstWords = words.filter(near);
+    const firstItems = items.filter(near);
+    if (k > 0) {
+      for (const el of items.filter((x) => !firstItems.includes(x))) {
+        gsap.fromTo(el, { y: 60, opacity: 0 }, { y: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: el, start: "top 100%", end: "top 76%", scrub: true } });
+      }
+      for (const el of words.filter((x) => !firstWords.includes(x))) {
+        gsap.fromTo(el, { y: 0, yPercent: 112, opacity: 0 }, { yPercent: 0, opacity: 1, ease: "none", scrollTrigger: { trigger: el, start: "top 100%", end: "top 80%", scrub: true } });
+      }
+      gsap
+        .timeline({ scrollTrigger: { trigger: section, start: "top 100%", end: "top 35%", scrub: true, onLeave: rest } })
+        .fromTo(
+          stage,
+          { y: narrow ? 70 : 150, scale: 0.92, rotateX: narrow ? 6 : 13, transformPerspective: 1200, transformOrigin: "50% 0%" },
+          { y: 0, scale: 1, rotateX: 0, ease: "power1.out" },
+          0,
+        )
+        // it shows up early, then finishes settling: you never wait for it
+        .fromTo(stage, { opacity: 0 }, { opacity: 1, ease: "power2.out", duration: 0.6 }, 0)
+        .fromTo(firstWords, { y: 0, yPercent: 112, opacity: 0 }, { yPercent: 0, opacity: 1, ease: "power2.out", duration: 0.45, stagger: 0.035 }, 0.08)
+        .fromTo(firstItems, { y: 60, opacity: 0 }, { y: 0, opacity: 1, ease: "power2.out", duration: 0.45, stagger: 0.04 }, 0.22)
+        .fromTo(fx, { blur: 10 * maxBlur }, { blur: 0, ease: "power1.in", onUpdate: applyBlur }, 0);
+    }
+    if (k < last) {
+      gsap
+        .timeline({ scrollTrigger: { trigger: section, start: "bottom 72%", end: "bottom 6%", scrub: true, onLeaveBack: rest } })
+        .fromTo(
+          stage,
+          { y: 0, scale: 1, rotateX: 0, opacity: 1 },
+          { y: narrow ? -50 : -120, scale: 1.06, rotateX: -5, transformPerspective: 1200, transformOrigin: "50% 100%", ease: "power1.in", immediateRender: false },
+          0,
+        )
+        .fromTo(stage, { opacity: 1 }, { opacity: 0, ease: "power2.in", immediateRender: false }, 0)
+        .fromTo(fx, { blur: 0 }, { blur: 9 * maxBlur, ease: "power1.in", immediateRender: false, onUpdate: applyBlur }, 0);
+    }
+  });
+}
+
 export interface Chapters {
   onChange(fn: (i: number, name: string) => void): void;
   onTransition(fn: (a: number, c: number, t: number) => void): void;
   scrollTo(target: string | HTMLElement): void;
   lenis: Lenis | null;
-  /** Home on a desktop: one chapter per screen, turned like pages (see pager.ts). */
-  paged: boolean;
-  setParticles(p: PageParticles | null): void;
-}
-
-let activePager: Pager | null = null;
-
-/**
- * Paged home on desktops with a mouse or trackpad. Phones, tablets and reduced motion keep
- * the normal scroll; ?scroll=1 forces it too.
- */
-function wantsPages(reduced: boolean, sections: HTMLElement[]): boolean {
-  if (reduced || sections.length === 0) return false;
-  if (new URLSearchParams(location.search).get("scroll") === "1") return false;
-  return matchMedia("(min-width: 980px) and (min-height: 560px) and (hover: hover) and (pointer: fine)").matches;
 }
 
 export function initMotion(reduced: boolean, onVelocity: (v: number) => void): Chapters {
-  const sections = [...document.querySelectorAll<HTMLElement>("[data-chapter]")];
-  const paged = wantsPages(reduced, sections);
-  if (paged) {
-    document.documentElement.classList.add("paged");
-    // the footer becomes the end of the last page
-    const footer = document.querySelector(".footer");
-    if (footer) sections[sections.length - 1]!.appendChild(footer);
-  }
-  const lenis = reduced || paged ? null : new Lenis({ lerp: 0.09, wheelMultiplier: 0.95 });
+  const lenis = reduced ? null : new Lenis({ lerp: 0.09, wheelMultiplier: 0.95 });
   if (lenis) {
     lenis.on("scroll", (e: Lenis) => {
       ScrollTrigger.update();
@@ -90,7 +130,7 @@ export function initMotion(reduced: boolean, onVelocity: (v: number) => void): C
     });
     gsap.ticker.add((t) => lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);
-  } else if (reduced) {
+  } else {
     document.documentElement.classList.add("reduced");
   }
 
@@ -101,7 +141,7 @@ export function initMotion(reduced: boolean, onVelocity: (v: number) => void): C
     const words = el.querySelectorAll(".split-line > span");
     const isHero = !!el.closest("#hero");
     if (isHero) return; // the hero plays after the loader (see revealHero)
-    if (paged) return; // pages appear whole, drawn by the particles
+    if (el.closest("[data-chapter]")) return; // home: part of the chapter's scroll cut (see sceneCuts)
     gsap.to(words, {
       y: 0,
       duration: 1.15,
@@ -111,15 +151,18 @@ export function initMotion(reduced: boolean, onVelocity: (v: number) => void): C
     });
   });
 
-  if (!reduced && !paged) {
+  if (!reduced) {
+    // kickers decode as they arrive (every time on the home page)
     document.querySelectorAll<HTMLElement>(".kicker").forEach((el) =>
-      ScrollTrigger.create({ trigger: el, start: "top 88%", once: true, onEnter: () => scramble(el) }),
+      ScrollTrigger.create({ trigger: el, start: "top 88%", once: !el.closest("[data-chapter]"), onEnter: () => scramble(el) }),
     );
-    ScrollTrigger.batch("[data-reveal]:not(#hero [data-reveal])", {
+    // sub-pages: items reveal once
+    ScrollTrigger.batch("[data-reveal]:not([data-chapter] [data-reveal])", {
       start: "top 90%",
       once: true,
       onEnter: (els) => gsap.to(els, { opacity: 1, y: 0, duration: 1.1, ease: "expo.out", stagger: 0.08, overwrite: true }),
     });
+    sceneCuts([...document.querySelectorAll<HTMLElement>("[data-chapter]")], innerWidth < 760);
   }
 
   // Nav hides once you scroll down and stays hidden, even when scrolling slows or stops.
@@ -147,13 +190,6 @@ export function initMotion(reduced: boolean, onVelocity: (v: number) => void): C
   const scrollTo = (target: string | HTMLElement) => {
     const el = typeof target === "string" ? document.querySelector<HTMLElement>(target) : target;
     if (!el) return;
-    if (activePager) {
-      const i = activePager.indexOf(el);
-      if (i >= 0) {
-        if (!activePager.go(i) && i === activePager.index && el !== activePager.page) el.scrollIntoView({ behavior: "smooth" });
-        return;
-      }
-    }
     if (lenis) lenis.scrollTo(el, { offset: 0, duration: 1.6 });
     else el.scrollIntoView();
   };
@@ -183,12 +219,12 @@ export function initMotion(reduced: boolean, onVelocity: (v: number) => void): C
     refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 150);
   }).observe(document.body);
 
-  // chapters (home page only): HUD, rail, and scene transitions driven by scroll or by page turns
+  // chapters (home page only): HUD, rail, scroll-scrubbed scene transitions
+  const sections = [...document.querySelectorAll<HTMLElement>("[data-chapter]")];
   const listeners: ((i: number, name: string) => void)[] = [];
   const tListeners: ((a: number, c: number, t: number) => void)[] = [];
   let lastT: [number, number, number] = [0, 1, 0];
   let active = -1;
-  let activateChapter: (i: number) => void = () => {};
   const rail = document.getElementById("rail");
   if (sections.length && rail) {
     const hudNum = document.getElementById("hud-num")!;
@@ -197,7 +233,7 @@ export function initMotion(reduced: boolean, onVelocity: (v: number) => void): C
     rail.innerHTML = sections.map((s, i) => `<button type="button" aria-label="${s.dataset.name}" data-go="${i}"><i></i></button>`).join("");
     const dots = [...rail.querySelectorAll("button")];
     dots.forEach((d, i) => d.addEventListener("click", () => scrollTo(sections[i]!)));
-    activateChapter = (i: number) => {
+    const setActive = (i: number) => {
       if (i === active) return;
       active = i;
       const name = sections[i]!.dataset.name ?? "";
@@ -207,35 +243,6 @@ export function initMotion(reduced: boolean, onVelocity: (v: number) => void): C
       document.body.classList.toggle("hero-active", i === 0);
       for (const fn of listeners) fn(i, name);
     };
-    const setActive = activateChapter;
-    const emitT = (a: number, c: number, t: number) => {
-      lastT = [a, c, t];
-      for (const fn of tListeners) fn(a, c, t);
-    };
-    if (paged) {
-      activePager = new Pager({
-        sections,
-        nav: document.getElementById("nav")!,
-        onActive: (i) => {
-          setActive(i);
-          gsap.to(hudBar, { scaleX: i / (sections.length - 1), duration: 1, ease: "expo.out" });
-        },
-        emit: emitT,
-        scramble: (el) => scramble(el),
-      });
-      emitT(0, 1, 0);
-      setActive(0);
-      gsap.set(hudBar, { scaleX: 0 });
-      // typing or following a #chapter link on the home page turns to that page
-      window.addEventListener("hashchange", () => {
-        const el = location.hash.length > 1 ? document.querySelector<HTMLElement>(location.hash) : null;
-        if (el) scrollTo(el);
-      });
-    }
-  }
-  if (sections.length && rail && !paged) {
-    const hudBar = document.getElementById("hud-bar")!;
-    const setActive = (i: number) => activateChapter(i);
     sections.forEach((s, i) =>
       ScrollTrigger.create({ trigger: s, start: "top 55%", end: "bottom 55%", onToggle: (self) => self.isActive && setActive(i) }),
     );
@@ -277,8 +284,6 @@ export function initMotion(reduced: boolean, onVelocity: (v: number) => void): C
     },
     scrollTo,
     lenis,
-    paged,
-    setParticles: (p) => activePager?.setParticles(p),
   };
 }
 
@@ -293,8 +298,7 @@ export function revealHero(reduced: boolean) {
     .fromTo(".nav", { yPercent: -100 }, { yPercent: 0, y: 0, duration: 1, ease: "expo.out", clearProps: "transform" }, "-=1.2");
 }
 
-/** Fire `fn` once when `el` first scrolls into view (or, on the paged home, when its page first appears). */
+/** Fire `fn` once when `el` first scrolls into view. */
 export function whenVisible(el: HTMLElement, fn: () => void, start = "top 70%") {
-  if (activePager) return activePager.whenEntered(el, fn);
   ScrollTrigger.create({ trigger: el, start, once: true, onEnter: fn });
 }

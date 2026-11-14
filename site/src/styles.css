@@ -385,19 +385,8 @@ body:not(.is-loading) .loader { opacity: 0; visibility: hidden; }
 .result .chip[data-q]:hover { border-color: var(--sig); color: var(--ink); }
 .result .bar-list { margin-top: 14px; }
 
-/* ---------- paged home (desktop): one chapter per screen, turned like pages ---------- */
-html.paged, html.paged body { height: 100%; overflow: hidden; overscroll-behavior: none; }
-html.paged main { position: fixed; inset: 0; z-index: 3; }
-html.paged .chapter { position: absolute; inset: 0; height: 100%; min-height: 0; padding: 112px 0 96px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; justify-content: flex-start; visibility: hidden; pointer-events: none; }
-html.paged .chapter::-webkit-scrollbar { display: none; }
-html.paged .chapter > :first-child { margin-top: auto; }
-html.paged .chapter > :last-child { margin-bottom: auto; }
-html.paged .chapter.is-active { visibility: visible; pointer-events: auto; }
-html.paged .chapter.hero { padding-bottom: 100px; }
-html.paged .chapter.final { padding-bottom: 0; }
-html.paged .chapter.final > .wrap { margin-top: auto; padding-bottom: 14vh; }
-html.paged .chapter.final > .footer { margin-bottom: 0; width: 100%; flex: none; padding-bottom: 76px; }
-html.paged .chapter:not(#hero) [data-split] .split-line > span, html.paged .chapter:not(#hero) [data-reveal] { transform: none; }
+/* home: each chapter's content sits on a stage that the scroll tilts in and out */
+.stage { width: 100%; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
