@@ -47,11 +47,11 @@ function caption(tl: gsap.core.Timeline, at: number, hold: number, kicker: strin
   cap.innerHTML = `<p class="fc-k">${kicker}</p><p class="fc-l">${wordsHtml(l1)}</p><p class="fc-l sig">${wordsHtml(l2)}</p>`;
   document.body.appendChild(cap);
   const [line1, line2] = cap.querySelectorAll(".fc-l");
-  const rise = { yPercent: 0, opacity: 1, filter: "blur(0px)", duration: 0.9, ease: "expo.out", stagger: 0.08 };
+  const rise = { yPercent: 0, opacity: 1, filter: "blur(0px)", duration: 0.8, ease: "expo.out", stagger: 0.07 };
   tl.fromTo(cap.querySelector(".fc-k"), { opacity: 0, y: 12, letterSpacing: "0.5em" }, { opacity: 1, y: 0, letterSpacing: "0.24em", duration: 1, ease: "expo.out" }, at);
   tl.fromTo(line1!.querySelectorAll(".w > span"), { y: 0, yPercent: 105, opacity: 0, filter: "blur(12px)" }, rise, at + 0.12);
-  tl.fromTo(line2!.querySelectorAll(".w > span"), { y: 0, yPercent: 105, opacity: 0, filter: "blur(12px)" }, rise, at + 0.3);
-  tl.to(cap, { opacity: 0, y: -30, filter: "blur(14px)", duration: 0.8, ease: "power2.in" }, at + hold);
+  tl.fromTo(line2!.querySelectorAll(".w > span"), { y: 0, yPercent: 105, opacity: 0, filter: "blur(12px)" }, rise, at + 0.25);
+  tl.to(cap, { opacity: 0, y: -30, filter: "blur(14px)", duration: 0.6, ease: "power2.in" }, at + hold);
 }
 
 (async () => {
@@ -151,24 +151,33 @@ function caption(tl: gsap.core.Timeline, at: number, hold: number, kicker: strin
     }, [], at);
     tl.call(() => p.swirl(0), [], at + 1.5);
   };
-  caption(tl, 5.3, 2.3, "Your AI × LayerZero", "Every chain.", "One conversation.");
-  pulses(5.0, 8.2);
-  vortex(7.75, 0, 5, -2.8);
-  caption(tl, 10.3, 2.3, "LayerZero", "Every message,", "followed hop by hop.");
-  pulses(10.0, 13.2);
-  vortex(12.75, 5, 6, 2.8);
-  caption(tl, 15.3, 2.3, "Trust check", "Who guards the bridge?", "Just ask.");
-  vortex(17.75, 6, 7, -2.8);
-  caption(tl, 20.3, 2.3, "Zero mainnet", "Built for Zero.", "Opens November 30.");
-  vortex(22.75, 7, 13, 3);
-  tl.to(["#brand", "#date"], { opacity: 0, duration: 0.7 }, 23.0);
+  // timing: a caption rises as its formation lands (LAND after the vortex starts), is read
+  // for a moment (READ), and the next vortex begins right as it lifts away
+  const LAND = 2.3;
+  const READ = 1.5;
+  let c = 5.05;
+  const scene = (kicker: string, l1: string, l2: string, a: number, next: number, spin: number, withPulses = false) => {
+    caption(tl, c, READ, kicker, l1, l2);
+    if (withPulses) pulses(c - 0.3, c + READ + 0.2);
+    vortex(c + READ + 0.05, a, next, spin);
+    const v = c + READ + 0.05;
+    c = v + LAND;
+    return v;
+  };
+  scene("Your AI × LayerZero", "Every chain.", "One conversation.", 0, 5, -2.8, true);
+  scene("LayerZero", "Every message,", "followed hop by hop.", 5, 6, 2.8, true);
+  scene("Trust check", "Who guards the bridge?", "Just ask.", 6, 7, -2.8);
+  const last = scene("Zero mainnet", "Built for Zero.", "Opens November 30.", 7, 13, 3);
+  tl.to(["#brand", "#date"], { opacity: 0, duration: 0.7 }, last + 0.25);
 
   // the end card
+  const end = last + LAND;
   $("end-name").innerHTML = wordsHtml("Plexa");
-  tl.fromTo("#end-name .w > span", { y: 0, yPercent: 105, filter: "blur(10px)" }, { yPercent: 0, filter: "blur(0px)", duration: 1.3, ease: "expo.out" }, 25.1);
-  tl.fromTo("#end-line", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" }, 25.6);
-  tl.fromTo("#end-date", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" }, 26.0);
-  tl.to({}, { duration: 1.2 }, 26.9); // a short hold on the last frame
+  tl.fromTo("#end-name .w > span", { y: 0, yPercent: 105, filter: "blur(10px)" }, { yPercent: 0, filter: "blur(0px)", duration: 1.2, ease: "expo.out" }, end);
+  tl.fromTo("#end-line", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" }, end + 0.45);
+  tl.fromTo("#end-date", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" }, end + 0.85);
+  tl.to({}, { duration: 1.3 }, end + 1.7); // a short hold on the last frame
+
 
   window.filmDuration = tl.duration();
   window.filmStart = () => void tl.play(0);
