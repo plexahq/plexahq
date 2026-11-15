@@ -4,3 +4,6 @@ renders/*
 audio/soundtrack.wav
 __pycache__/
 *.pyc
+film3d/frames/
+film3d/*.log
+film3d/test_audio.wav

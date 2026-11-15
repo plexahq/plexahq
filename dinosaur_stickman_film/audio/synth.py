@@ -520,3 +520,94 @@ def apply_reverb(x, wet=0.3, ir=None):
         out[:, ch] = signal.fftconvolve(x[:, ch], ir[:, ch])
     out = out[: len(x)]
     return x * (1 - wet * 0.5) + out * wet
+
+
+# ----------------------------------------------------------------- non-verbal voice (character reactions)
+VOWELS = {
+    "a": [(1000, 1.0), (1500, 0.7), (3100, 0.35), (4200, 0.15)],
+    "o": [(520, 1.0), (880, 0.55), (2900, 0.12)],
+    "u": [(380, 1.0), (950, 0.3), (2600, 0.08)],
+    "e": [(620, 1.0), (2100, 0.6), (3000, 0.25)],
+    "h": [(800, 1.0), (1300, 0.7), (2600, 0.4)],
+}
+
+
+def _formants(src, vowel, shift=1.0, q=0.12):
+    return sum(bp(src, f * shift * (1 - q), f * shift * (1 + q)) * g for f, g in VOWELS[vowel])
+
+
+def voice(f0, dur, vowel="a", breath=0.15, rough=0.0, vib=(5.5, 0.02), shift=1.15, attack=0.05, release=0.2, drive=1.0):
+    """A sung/shouted vowel. f0: list of (sec, Hz) points for the pitch contour."""
+    n = n_of(dur)
+    t = tt(n)
+    xs, ys = zip(*f0)
+    f = np.interp(t, xs, ys)
+    f = f * (1 + vib[1] * np.sin(2 * np.pi * vib[0] * t)) * (1 + 0.006 * lp(RNG.standard_normal(n), 30))
+    src = saw_f(f, n)
+    if rough > 0:
+        src = src * (1 - rough * 0.5 * (1 + np.sin(2 * np.pi * np.cumsum(f * 0.5) / SR)))
+    src = lp(src, 5000)
+    asp = bp(noise(n), 400, 6000) * breath
+    y = _formants(src + asp, vowel, shift)
+    if drive > 1:
+        y = np.tanh(y * drive) / np.tanh(drive)
+    e = env_ar(n, attack, release, 1.3)
+    return y * e / (np.abs(y).max() + 1e-9)
+
+
+def gasp(amp=0.5):
+    """Sharp frightened inhale: 'hah!'"""
+    n = n_of(0.5)
+    t = tt(n)
+    nz = _formants(bp(noise(n), 300, 6000), "h", 1.1, 0.18)
+    nz = nz * np.exp(-t * 7) * env_ar(n, 0.015, 0.1)
+    v = voice([(0, 420), (0.25, 520)], 0.25, "a", breath=0.6, shift=1.2, attack=0.01, release=0.15) * 0.35
+    out = nz / (np.abs(nz).max() + 1e-9)
+    out[: len(v)] += v
+    return out * amp
+
+
+def scream(dur=1.3, amp=0.6):
+    """'Aaaah!' from a frightened young character."""
+    f0 = [(0, 540), (0.12, 760), (0.45, 720), (dur * 0.75, 690), (dur, 560)]
+    x = voice(f0, dur, "a", breath=0.25, rough=0.3, vib=(6.0, 0.025), shift=1.2, attack=0.04, release=0.3, drive=2.2)
+    return x * amp
+
+
+def ooh(dur=0.9, amp=0.35):
+    """Wondering 'oooh'."""
+    return voice([(0, 300), (0.3, 330), (dur, 250)], dur, "o", breath=0.35, vib=(4.5, 0.012), shift=1.15, attack=0.12,
+                 release=0.35) * amp
+
+
+def whimper(dur=0.9, amp=0.3):
+    return voice([(0, 380), (0.3, 420), (dur, 340)], dur, "u", breath=0.5, vib=(8.0, 0.05), shift=1.15, attack=0.08,
+                 release=0.3) * amp
+
+
+def shaky_breath(dur=0.6, amp=0.2, inhale=True):
+    n = n_of(dur)
+    t = tt(n) / dur
+    x = sweep_filter(noise(n), np.linspace(700, 1700, 10) if inhale else np.linspace(1500, 600, 10), width=0.9)
+    trem = 0.6 + 0.4 * np.sin(2 * np.pi * 11 * tt(n))
+    return x * np.sin(np.pi * t) * trem * amp / (np.abs(x).max() + 1e-9)
+
+
+def pant(dur, rate=3.4, amp=0.3):
+    """Running out of breath: 'hah-heh-hah-heh'."""
+    n = n_of(dur)
+    out = np.zeros(n)
+    k = 0
+    period = 1.0 / rate
+    while k * period < dur - 0.2:
+        inhale = k % 2 == 0
+        seg = n_of(period * 0.85)
+        s = n_of(k * period)
+        if inhale:
+            x = _formants(bp(noise(seg), 300, 6000), "h", 1.1, 0.2)
+            x = x / (np.abs(x).max() + 1e-9) * np.sin(np.pi * np.linspace(0, 1, seg)) * 0.6
+        else:
+            x = voice([(0, 330), (period, 300)], period * 0.85, "h", breath=0.9, shift=1.15, attack=0.02, release=0.08) * 0.8
+        out[s:s + len(x)] += x[: n - s]
+        k += 1
+    return out * amp
