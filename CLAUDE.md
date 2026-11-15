@@ -10,6 +10,7 @@ The owner writes in Turkish; reply in Turkish. Website copy is English.
 - Design references were teseralab.com and fungolabs.org. Use them for inspiration only, never copy their colours, fonts or imagery.
 
 ## Layout
+- `dinosaur_stickman_film/`: a separate animated short film the owner asked for ("The Last Day of the Dinosaurs"), unrelated to Plexa. Python + Skia picture, numpy/scipy soundtrack, FFmpeg encode; see its README. The finished MP4 is in `dinosaur_stickman_film/final/` and copied to the root `final/` folder. Not part of the site build; don't link it from the website.
 - `src/`: the server.
   - `chains.ts`: chain registry and env overrides. Mainnets: Ethereum, Arbitrum, Base, HyperEVM, BNB (`bnb`), OP, Polygon, Avalanche, plus Zero placeholders.
   - `tools/evm.ts`, `tools/layerzero.ts`, `tools/markets.ts`: the tools.

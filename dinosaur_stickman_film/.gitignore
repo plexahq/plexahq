@@ -1,0 +1,6 @@
+renders/*
+!renders/qc_report.json
+!renders/.gitkeep
+audio/soundtrack.wav
+__pycache__/
+*.pyc

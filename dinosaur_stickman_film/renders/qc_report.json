@@ -1,0 +1,49 @@
+{
+  "file_mb": 92.01,
+  "duration_s": 283.7,
+  "video": {
+    "codec": "h264",
+    "profile": "High",
+    "width": 1920,
+    "height": 1080,
+    "fps": 24.0,
+    "pix_fmt": "yuv420p",
+    "frames": 6808,
+    "duration": 283.666667,
+    "aspect": 1.7778
+  },
+  "audio": {
+    "codec": "aac",
+    "sample_rate": 48000,
+    "channels": 2,
+    "duration": 283.7
+  },
+  "timeline_s": 283.7,
+  "decode_errors": [],
+  "black_segments": [
+    [
+      "0",
+      "0.666667"
+    ],
+    [
+      "263.5",
+      "266.875"
+    ],
+    [
+      "274.417",
+      "276.917"
+    ],
+    [
+      "279.875",
+      "283.625"
+    ]
+  ],
+  "frozen_segments": [
+    "263.708"
+  ],
+  "loudness": {
+    "integrated_lufs": -19.9,
+    "true_peak_dbfs": -2.5,
+    "lra": 10.0
+  }
+}
