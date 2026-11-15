@@ -7,3 +7,4 @@ __pycache__/
 film3d/frames/
 film3d/*.log
 film3d/test_audio.wav
+toon_test/out/
